@@ -219,24 +219,55 @@ else:
 # ============================================================
 # Force-balance diagram (single V, gamma)
 # ============================================================
+def _bp(s, p, cg, sg):
+    """Body-frame (s along nose, p perpendicular) -> world (x, z)."""
+    return (s * cg - p * sg, s * sg + p * cg)
+
+
 def _add_drone_glyph(fig, gr, r):
-    """Small semi-transparent tail-sitter at the origin, tilted by gr [rad]."""
+    """A tail-sitter drone at the origin, nose along the body axis (tilt gr)."""
     cg, sg = np.cos(gr), np.sin(gr)
-    bx, bz = cg, sg          # nose / body-axis direction
-    px, pz = -sg, cg         # perpendicular (rotor bar)
-    # fuselage
+    body = "#1a1a1a"
+
+    # fuselage (tapered body, nose at +s)
+    pts = [(1.15, 0.0), (0.55, 0.13), (-0.15, 0.17), (-0.85, 0.09),
+           (-1.05, 0.0), (-0.85, -0.09), (-0.15, -0.17), (0.55, -0.13)]
+    fx, fz = zip(*[_bp(s * r, p * r, cg, sg) for s, p in pts])
     fig.add_trace(go.Scatter(
-        x=[-0.9 * r * bx, 1.1 * r * bx], y=[-0.9 * r * bz, 1.1 * r * bz],
-        mode="lines", line=dict(color="#37474f", width=6),
-        opacity=0.45, showlegend=False, hoverinfo="skip"))
-    # rotor bar + rotor discs near the nose
-    cxr, czr = 0.7 * r * bx, 0.7 * r * bz
-    bl = 0.85 * r
-    fig.add_trace(go.Scatter(
-        x=[cxr + bl * px, cxr - bl * px], y=[czr + bl * pz, czr - bl * pz],
-        mode="lines+markers", line=dict(color="#37474f", width=4),
-        marker=dict(size=11, color="#90a4ae"),
-        opacity=0.55, showlegend=False, hoverinfo="skip"))
+        x=list(fx) + [fx[0]], y=list(fz) + [fz[0]], mode="lines",
+        fill="toself", fillcolor=body, line=dict(color=body, width=1),
+        opacity=0.92, showlegend=False, hoverinfo="skip"))
+
+    # motor arms + rotor discs near the nose
+    for side in (+1, -1):
+        arm0 = _bp(0.35 * r, 0.0, cg, sg)
+        disc = _bp(0.55 * r, side * 0.82 * r, cg, sg)
+        fig.add_shape(type="line", x0=arm0[0], y0=arm0[1],
+                      x1=disc[0], y1=disc[1],
+                      line=dict(color=body, width=3))
+        rd = 0.30 * r
+        fig.add_shape(type="circle", x0=disc[0] - rd, x1=disc[0] + rd,
+                      y0=disc[1] - rd, y1=disc[1] + rd,
+                      line=dict(color=body, width=2.5),
+                      fillcolor="#78909c", opacity=0.5)
+        hb = 0.06 * r
+        fig.add_shape(type="circle", x0=disc[0] - hb, x1=disc[0] + hb,
+                      y0=disc[1] - hb, y1=disc[1] + hb,
+                      line=dict(color=body, width=1), fillcolor=body)
+
+
+def _add_projections(fig, x, z, name, color):
+    """Dashed component rectangle + Nx / Nz labels for a force vector."""
+    fig.add_shape(type="line", x0=x, x1=x, y0=0, y1=z,
+                  line=dict(color=color, width=1, dash="dot"))
+    fig.add_shape(type="line", x0=0, x1=x, y0=z, y1=z,
+                  line=dict(color=color, width=1, dash="dot"))
+    fig.add_annotation(x=x / 2, y=z, text=f"{name}x", showarrow=False,
+                       font=dict(color=color, size=11),
+                       yshift=11 if z >= 0 else -11)
+    fig.add_annotation(x=x, y=z / 2, text=f"{name}z", showarrow=False,
+                       font=dict(color=color, size=11),
+                       xshift=16 if x >= 0 else -16)
 
 
 def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
@@ -270,7 +301,7 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
     fig.add_shape(type="line", x0=-R * cg, x1=R * cg, y0=-R * sg, y1=R * sg,
                   line=dict(color="grey", width=1, dash="dot"))
     # drone glyph + gamma arc
-    _add_drone_glyph(fig, gr, mag * 0.18)
+    _add_drone_glyph(fig, gr, mag * 0.22)
     rarc = mag * 0.22
     th = np.linspace(0, gr, 40)
     fig.add_trace(go.Scatter(x=rarc * np.cos(th), y=rarc * np.sin(th),
@@ -279,11 +310,9 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
     fig.add_annotation(x=rarc * 1.3 * np.cos(gr / 2),
                        y=rarc * 1.3 * np.sin(gr / 2),
                        text="γ", showarrow=False, font=dict(size=16))
-    # T component guide lines (dashed)
-    fig.add_shape(type="line", x0=Tx, x1=Tx, y0=0, y1=Tz,
-                  line=dict(color=RED, width=1, dash="dot"))
-    fig.add_shape(type="line", x0=0, x1=Tx, y0=Tz, y1=Tz,
-                  line=dict(color=RED, width=1, dash="dot"))
+    # component guide lines (dashed, colour-matched) for T, L, D
+    for name, x, z, color in vectors[:3]:
+        _add_projections(fig, x, z, name, color)
 
     # force vectors + labels
     for name, x, z, color in vectors:
