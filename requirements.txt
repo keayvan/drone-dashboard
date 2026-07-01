@@ -1,4 +1,7 @@
-streamlit==1.45.1
-plotly==5.24.1
-numpy==2.3.4
-pandas==2.2.3
+# Lower bounds only, so the resolver picks recent versions that ship
+# prebuilt wheels for the Streamlit Cloud Python (currently 3.14) —
+# avoids slow/failing source builds of numpy/pandas.
+streamlit>=1.40
+plotly>=5.24
+numpy>=2.3
+pandas>=2.3
