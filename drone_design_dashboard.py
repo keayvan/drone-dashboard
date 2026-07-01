@@ -358,34 +358,34 @@ with tab_table:
 
 # ---------- Tab 4: physics ----------
 with tab_about:
-    st.markdown(r"""
-### Model — 2-DOF longitudinal steady trim
+    st.markdown("### Model — 2-DOF longitudinal steady trim")
+    st.markdown(
+        r"Pitch angle $\gamma$ is measured from horizontal: "
+        r"$\gamma = 90^\circ$ is hover (thrust vertical), "
+        r"$\gamma \to 0^\circ$ is forward cruise. With $\alpha = 0$, "
+        r"the velocity direction equals the body axis.")
 
-Pitch angle $\gamma$ is measured from horizontal: $\gamma = 90^\circ$ is hover
-(thrust vertical), $\gamma \to 0^\circ$ is forward cruise. With $\alpha = 0$,
-the velocity direction equals the body axis.
+    st.markdown("**Force balance**")
+    st.latex(r"x:\quad T\cos\gamma - D\cos\gamma - L\sin\gamma = 0")
+    st.latex(r"z:\quad T\sin\gamma + L\cos\gamma - W - D\sin\gamma = 0")
 
-**Force balance**
-$$x:\quad T\cos\gamma - D\cos\gamma - L\sin\gamma = 0$$
-$$z:\quad T\sin\gamma + L\cos\gamma - W - D\sin\gamma = 0$$
+    st.markdown(r"**Closed-form trim** (eliminating $T$):")
+    st.latex(r"L = W\cos\gamma \qquad "
+             r"v^2 = \frac{W\cos\gamma}{k_L} \qquad "
+             r"T = D + L\tan\gamma")
+    st.markdown(
+        r"with $k_L = \tfrac{1}{2}\rho\,C_{L0}\,S$ and "
+        r"$k_D = \tfrac{1}{2}\rho\,C_{D0}\,A$.")
 
-**Closed-form trim** (eliminating $T$):
-$$L = W\cos\gamma, \qquad
-  v^2 = \frac{W\cos\gamma}{k_L}, \qquad
-  T = D + L\tan\gamma$$
+    st.info("Drag does **not** enter the trim-speed formula — lift and weight "
+            "alone set the equilibrium speed; drag only sets the required thrust.")
 
-with $k_L = \tfrac12\rho\,C_{L0}\,S$ and $k_D = \tfrac12\rho\,C_{D0}\,A$.
+    st.markdown(r"**Off-trim (contour) quantities** for any $(v, \gamma)$:")
+    st.latex(r"T_x = \frac{D\cos\gamma + L\sin\gamma}{\cos\gamma} \qquad "
+             r"T_z = \frac{W + D\sin\gamma - L\cos\gamma}{\sin\gamma} \qquad "
+             r"T_\text{req} = \max(T_x,\, T_z)")
+    st.markdown(r"The imbalance $|T_x - T_z|$ is zero exactly on the trim curve.")
 
-> Drag does **not** enter the trim-speed formula — lift and weight alone set the
-> equilibrium speed; drag only sets the required thrust.
-
-**Off-trim (contour) quantities** for any $(v,\gamma)$:
-$$T_x = \frac{D\cos\gamma + L\sin\gamma}{\cos\gamma},\quad
-  T_z = \frac{W + D\sin\gamma - L\cos\gamma}{\sin\gamma},\quad
-  T_\text{req} = \max(T_x, T_z)$$
-
-The imbalance $|T_x - T_z|$ is zero exactly on the trim curve.
-""")
-    st.info("Source model: `steady_trimmed_flight_2DOF.py`. "
+    st.caption("Source model: `steady_trimmed_flight_2DOF.py`. "
             "The default preset uses ⚠️ placeholder aero coefficients "
             "(C_L0, C_D0) — replace them with values from your airfoil/CFD data.")
