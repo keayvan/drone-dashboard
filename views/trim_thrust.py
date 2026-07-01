@@ -217,10 +217,106 @@ else:
                f"{T_available:.0f} N. See crossings below.")
 
 # ============================================================
+# Force-balance diagram (single V, gamma)
+# ============================================================
+def _add_drone_glyph(fig, gr, r):
+    """Small semi-transparent tail-sitter at the origin, tilted by gr [rad]."""
+    cg, sg = np.cos(gr), np.sin(gr)
+    bx, bz = cg, sg          # nose / body-axis direction
+    px, pz = -sg, cg         # perpendicular (rotor bar)
+    # fuselage
+    fig.add_trace(go.Scatter(
+        x=[-0.9 * r * bx, 1.1 * r * bx], y=[-0.9 * r * bz, 1.1 * r * bz],
+        mode="lines", line=dict(color="#37474f", width=6),
+        opacity=0.45, showlegend=False, hoverinfo="skip"))
+    # rotor bar + rotor discs near the nose
+    cxr, czr = 0.7 * r * bx, 0.7 * r * bz
+    bl = 0.85 * r
+    fig.add_trace(go.Scatter(
+        x=[cxr + bl * px, cxr - bl * px], y=[czr + bl * pz, czr - bl * pz],
+        mode="lines+markers", line=dict(color="#37474f", width=4),
+        marker=dict(size=11, color="#90a4ae"),
+        opacity=0.55, showlegend=False, hoverinfo="skip"))
+
+
+def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
+    """Force-balance vector diagram for one (V, gamma). Returns (fig, values)."""
+    W = mass * g
+    kL, kD = coefficients(rho, S, A, CL0, CD0)
+    gr = np.radians(gamma_deg)
+    sg, cg = np.sin(gr), np.cos(gr)
+
+    L = kL * v ** 2
+    D = kD * v ** 2
+    T = D + L * np.tan(gr)          # thrust from horizontal (x) balance
+    Tx, Tz = T * cg, T * sg
+
+    vectors = [
+        ("T", Tx, Tz, RED),
+        ("L", -L * sg, L * cg, BLUE),
+        ("D", -D * cg, -D * sg, PURPLE),
+        ("W", 0.0, -W, "black"),
+    ]
+    mag = max(T, L, D, W, 1e-6)
+    R = mag * 1.35                  # symmetric square range, origin centred
+
+    fig = go.Figure()
+    # axes through origin
+    fig.add_shape(type="line", x0=-R, x1=R, y0=0, y1=0,
+                  line=dict(color="#2e7d32", width=1.5))
+    fig.add_shape(type="line", x0=0, x1=0, y0=-R, y1=R,
+                  line=dict(color="#2e7d32", width=1.5))
+    # body axis (= velocity direction, alpha = 0)
+    fig.add_shape(type="line", x0=-R * cg, x1=R * cg, y0=-R * sg, y1=R * sg,
+                  line=dict(color="grey", width=1, dash="dot"))
+    # drone glyph + gamma arc
+    _add_drone_glyph(fig, gr, mag * 0.18)
+    rarc = mag * 0.22
+    th = np.linspace(0, gr, 40)
+    fig.add_trace(go.Scatter(x=rarc * np.cos(th), y=rarc * np.sin(th),
+                             mode="lines", line=dict(color="black", width=1.4),
+                             showlegend=False, hoverinfo="skip"))
+    fig.add_annotation(x=rarc * 1.3 * np.cos(gr / 2),
+                       y=rarc * 1.3 * np.sin(gr / 2),
+                       text="γ", showarrow=False, font=dict(size=16))
+    # T component guide lines (dashed)
+    fig.add_shape(type="line", x0=Tx, x1=Tx, y0=0, y1=Tz,
+                  line=dict(color=RED, width=1, dash="dot"))
+    fig.add_shape(type="line", x0=0, x1=Tx, y0=Tz, y1=Tz,
+                  line=dict(color=RED, width=1, dash="dot"))
+
+    # force vectors + labels
+    for name, x, z, color in vectors:
+        fig.add_annotation(x=x, y=z, ax=0, ay=0, xref="x", yref="y",
+                           axref="x", ayref="y", showarrow=True,
+                           arrowhead=3, arrowsize=1.2, arrowwidth=3.2,
+                           arrowcolor=color)
+        fig.add_annotation(x=x, y=z, text=f"<b>{name}</b>", showarrow=False,
+                           font=dict(color=color, size=16),
+                           xshift=16 if x >= 0 else -16,
+                           yshift=16 if z >= 0 else -16)
+
+    fig.update_xaxes(range=[-R, R], title_text="Horizontal force component [N]",
+                     zeroline=False, showgrid=False)
+    fig.update_yaxes(range=[-R, R], title_text="Vertical force component [N]",
+                     zeroline=False, showgrid=False,
+                     scaleanchor="x", scaleratio=1)
+    fig.update_layout(
+        height=640, plot_bgcolor="white", showlegend=False,
+        title=f"Force diagram — trimmed forward flight "
+              f"(α = 0, γ = {gamma_deg:.0f}°)",
+        margin=dict(t=60, l=40, r=40, b=40))
+
+    return fig, dict(L=L, D=D, T=T, Tx=Tx, Tz=Tz, W=W,
+                     residual=Tz + L * cg - D * sg - W)
+
+
+# ============================================================
 # Tabs
 # ============================================================
-tab_curves, tab_map, tab_table, tab_about = st.tabs(
-    ["📈 Trim curves", "🗺️ Feasibility map", "📋 Data table", "📖 Physics"]
+tab_curves, tab_force, tab_map, tab_table, tab_about = st.tabs(
+    ["📈 Trim curves", "⚖️ Force balance", "🗺️ Feasibility map",
+     "📋 Data table", "📖 Physics"]
 )
 
 # ---------- Tab 1: trim curves ----------
@@ -292,6 +388,51 @@ with tab_curves:
             [(f"{g:.2f}", f"{v:.2f}", f"{T:.1f}") for g, v, T in crossings],
             columns=["γ [deg]", "v_trim [m/s]", "T [N]"]),
             hide_index=True, use_container_width=False)
+
+# ---------- Tab: force balance ----------
+with tab_force:
+    st.markdown(
+        "Instantaneous **force balance** for a chosen airspeed and pitch "
+        "angle (α = 0, so the body axis coincides with the velocity "
+        "direction). Thrust is taken from the horizontal balance "
+        "$T = D + L\\tan\\gamma$, so the horizontal axis is always balanced; "
+        "the **vertical residual** tells you whether the vehicle is trimmed "
+        "at that speed.")
+
+    fc1, fc2 = st.columns(2)
+    with fc1:
+        gamma_fb = st.slider("Pitch angle γ [deg]", 1, 89, 35, key="fb_gamma")
+    kL_fb, _ = coefficients(rho, S, A, CL0, CD0)
+    v_trim_here = float(np.sqrt(
+        max(W * np.cos(np.radians(gamma_fb)) / kL_fb, 0.0)))
+    v_max_slider = float(max(round(v_trim_here * 2), 10))
+    with fc2:
+        v_fb = st.slider("Airspeed V [m/s]", 0.0, v_max_slider,
+                         float(round(v_trim_here, 1)), key="fb_v",
+                         help=f"Trim speed at γ = {gamma_fb}° is "
+                              f"≈ {v_trim_here:.1f} m/s")
+
+    fig_fb, fb = force_diagram_figure(v_fb, gamma_fb, mass, rho, S, A, CL0, CD0)
+    st.plotly_chart(fig_fb, use_container_width=True)
+
+    m = st.columns(6)
+    m[0].metric("Lift L", f"{fb['L']:.1f} N")
+    m[1].metric("Drag D", f"{fb['D']:.1f} N")
+    m[2].metric("Tx (horiz.)", f"{fb['Tx']:.1f} N")
+    m[3].metric("Tz (vert.)", f"{fb['Tz']:.1f} N")
+    m[4].metric("T (total)", f"{fb['T']:.1f} N")
+    m[5].metric("Weight W", f"{fb['W']:.1f} N")
+
+    resid = fb["residual"]
+    if abs(resid) < 0.01 * max(fb["W"], 1.0):
+        st.success(f"✅ Trimmed — vertical forces balance (net {resid:+.1f} N). "
+                   f"V ≈ trim speed for γ = {gamma_fb}°.")
+    elif resid > 0:
+        st.info(f"↑ Net vertical force {resid:+.1f} N (upward) — V is above the "
+                f"trim speed for this γ; the vehicle would climb / accelerate up.")
+    else:
+        st.warning(f"↓ Net vertical force {resid:+.1f} N (downward) — V is below "
+                   f"the trim speed for this γ; the vehicle would sink.")
 
 # ---------- Tab 2: feasibility map ----------
 with tab_map:
