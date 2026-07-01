@@ -253,24 +253,35 @@ def _add_projections(fig, x, z, name, color):
                        xshift=16 if x >= 0 else -16)
 
 
-def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
-    """Force-balance vector diagram for one (V, gamma). Returns (fig, values)."""
+def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0,
+                         wingless=False, g=G0):
+    """
+    Trimmed force diagram for one (V, gamma), thrust free to tilt.
+
+    The thrust vector is solved from BOTH balances (not fixed to the body
+    axis):
+        x-balance:  Tx = D*cos(g) + L*sin(g)
+        z-balance:  Tz = W + D*sin(g) - L*cos(g)
+        T = hypot(Tx, Tz),   thrust angle phi = atan2(Tz, Tx)
+        tilt off flight path = phi - gamma
+    With a wing and enough speed (L = W*cos g) the tilt is 0 (thrust along
+    the body axis); with no wing the thrust must tilt up to carry the weight.
+    Returns (fig, values).
+    """
     W = mass * g
     kL, kD = coefficients(rho, S, A, CL0, CD0)
     gr = np.radians(gamma_deg)
     sg, cg = np.sin(gr), np.cos(gr)
 
-    L = kL * v ** 2
+    L = 0.0 if wingless else kL * v ** 2
     D = kD * v ** 2
-    T = D + L * np.tan(gr)          # thrust from horizontal (x) balance
-    Tx, Tz = T * cg, T * sg
-    resid = Tz + L * cg - D * sg - W   # net vertical (horizontal is balanced)
-    if abs(resid) < 0.01 * max(W, 1.0):
-        state = "trimmed"
-    elif resid > 0:
-        state = "off-trim → climbing"
-    else:
-        state = "off-trim → sinking"
+
+    # thrust vector that trims BOTH axes (free to tilt off the flight path)
+    Tx = D * cg + L * sg
+    Tz = W + D * sg - L * cg
+    T = float(np.hypot(Tx, Tz))
+    phi = float(np.degrees(np.arctan2(Tz, Tx)))   # thrust angle from horizontal
+    tilt = phi - gamma_deg                          # tilt off the flight path
 
     vectors = [
         ("T", Tx, Tz, RED),
@@ -280,6 +291,7 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
     ]
     mag = max(T, L, D, W, 1e-6)
     R = mag * 1.35                  # symmetric square range, origin centred
+    eps = 1e-6 * mag
 
     fig = go.Figure()
     # axes through origin
@@ -287,11 +299,13 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
                   line=dict(color="#2e7d32", width=1.5))
     fig.add_shape(type="line", x0=0, x1=0, y0=-R, y1=R,
                   line=dict(color="#2e7d32", width=1.5))
-    # body axis (= velocity direction, alpha = 0)
+    # body axis / flight path (= velocity direction, alpha = 0)
     fig.add_shape(type="line", x0=-R * cg, x1=R * cg, y0=-R * sg, y1=R * sg,
                   line=dict(color="grey", width=1, dash="dot"))
-    # drone glyph + gamma arc
+    # drone glyph
     _add_drone_glyph(fig, gr, mag * 0.22)
+
+    # gamma arc (horizontal -> flight path)
     rarc = mag * 0.22
     th = np.linspace(0, gr, 40)
     fig.add_trace(go.Scatter(x=rarc * np.cos(th), y=rarc * np.sin(th),
@@ -299,13 +313,31 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
                              showlegend=False, hoverinfo="skip"))
     fig.add_annotation(x=rarc * 1.3 * np.cos(gr / 2),
                        y=rarc * 1.3 * np.sin(gr / 2),
-                       text="γ", showarrow=False, font=dict(size=16))
+                       text="γ", showarrow=False, font=dict(size=15))
+
+    # tilt arc (flight path -> thrust direction) when thrust is not aligned
+    if T > eps and abs(tilt) > 1.0:
+        phir = np.radians(phi)
+        rt = mag * 0.34
+        tt = np.linspace(gr, phir, 40)
+        fig.add_trace(go.Scatter(x=rt * np.cos(tt), y=rt * np.sin(tt),
+                                 mode="lines",
+                                 line=dict(color=RED, width=1.4, dash="dot"),
+                                 showlegend=False, hoverinfo="skip"))
+        fig.add_annotation(x=rt * 1.18 * np.cos((gr + phir) / 2),
+                           y=rt * 1.18 * np.sin((gr + phir) / 2),
+                           text=f"{tilt:+.0f}°", showarrow=False,
+                           font=dict(color=RED, size=12))
+
     # component guide lines (dashed, colour-matched) for T, L, D
     for name, x, z, color in vectors[:3]:
-        _add_projections(fig, x, z, name, color)
+        if np.hypot(x, z) > eps:
+            _add_projections(fig, x, z, name, color)
 
-    # force vectors + labels
+    # force vectors + labels (skip any that are ~zero, e.g. L when wingless)
     for name, x, z, color in vectors:
+        if np.hypot(x, z) <= eps:
+            continue
         fig.add_annotation(x=x, y=z, ax=0, ay=0, xref="x", yref="y",
                            axref="x", ayref="y", showarrow=True,
                            arrowhead=3, arrowsize=1.2, arrowwidth=3.2,
@@ -315,30 +347,17 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
                            xshift=16 if x >= 0 else -16,
                            yshift=16 if z >= 0 else -16)
 
-    # net (unbalanced) vertical force, drawn just right of the z-axis when
-    # off-trim — makes clear the four forces do NOT close at this V.
-    if abs(resid) > 0.01 * max(W, 1.0):
-        xo = 0.07 * R
-        fig.add_annotation(x=xo, y=resid, ax=xo, ay=0, xref="x", yref="y",
-                           axref="x", ayref="y", showarrow=True,
-                           arrowhead=3, arrowsize=1.1, arrowwidth=3,
-                           arrowcolor=ORANGE)
-        fig.add_annotation(x=xo, y=resid, text="<b>F_net</b>", showarrow=False,
-                           font=dict(color=ORANGE, size=12),
-                           xshift=18, yshift=6 if resid >= 0 else -6)
-
+    title = (f"Force diagram (α = 0, γ = {gamma_deg:.0f}°) — "
+             f"thrust tilt {tilt:+.1f}° off flight path")
     fig.update_xaxes(range=[-R, R], title_text="Horizontal force component [N]",
                      zeroline=False, showgrid=False)
     fig.update_yaxes(range=[-R, R], title_text="Vertical force component [N]",
                      zeroline=False, showgrid=False,
                      scaleanchor="x", scaleratio=1)
-    fig.update_layout(
-        height=640, plot_bgcolor="white", showlegend=False,
-        title=f"Force diagram (α = 0, γ = {gamma_deg:.0f}°) — {state}",
-        margin=dict(t=60, l=40, r=40, b=40))
+    fig.update_layout(height=640, plot_bgcolor="white", showlegend=False,
+                      title=title, margin=dict(t=60, l=40, r=40, b=40))
 
-    return fig, dict(L=L, D=D, T=T, Tx=Tx, Tz=Tz, W=W,
-                     residual=Tz + L * cg - D * sg - W)
+    return fig, dict(L=L, D=D, T=T, Tx=Tx, Tz=Tz, W=W, phi=phi, tilt=tilt)
 
 
 # ============================================================
@@ -422,12 +441,13 @@ with tab_curves:
 # ---------- Tab: force balance ----------
 with tab_force:
     st.markdown(
-        "Instantaneous **force balance** for a chosen airspeed and pitch "
-        "angle (α = 0, so the body axis coincides with the velocity "
-        "direction). Thrust is taken from the horizontal balance "
-        "$T = D + L\\tan\\gamma$, so the horizontal axis is always balanced; "
-        "the **vertical residual** tells you whether the vehicle is trimmed "
-        "at that speed.")
+        "Fully **trimmed** force balance for a chosen airspeed and pitch "
+        "angle. Thrust is **free to tilt** off the flight path — it is solved "
+        "from both axes: $T_x = D\\cos\\gamma + L\\sin\\gamma$ (horizontal) and "
+        "$T_z = W + D\\sin\\gamma - L\\cos\\gamma$ (vertical), giving "
+        "$T = \\sqrt{T_x^2 + T_z^2}$ and its direction. The **tilt off the "
+        "flight path** shows how far thrust must point away from the velocity "
+        "to carry the weight — zero with enough wing lift, large with no wing.")
 
     col_in, col_fig, col_out = st.columns([1, 2.6, 1.1], gap="large")
 
@@ -441,10 +461,15 @@ with tab_force:
         v_max_slider = float(max(round(v_trim_here * 2), 10))
         v_fb = st.slider("Airspeed V [m/s]", 0.0, v_max_slider,
                          float(round(v_trim_here, 1)), key="fb_v",
-                         help=f"Trim speed at γ = {gamma_fb}° is "
-                              f"≈ {v_trim_here:.1f} m/s")
+                         help=f"With a wing, thrust tilt is 0 at "
+                              f"≈ {v_trim_here:.1f} m/s (γ = {gamma_fb}°)")
+        wingless = st.checkbox("Wingless (quad mode) — ignore lift",
+                               value=False, key="fb_wingless",
+                               help="Set L = 0. Thrust must tilt to carry the "
+                                    "weight, like a normal quadcopter.")
 
-    fig_fb, fb = force_diagram_figure(v_fb, gamma_fb, mass, rho, S, A, CL0, CD0)
+    fig_fb, fb = force_diagram_figure(v_fb, gamma_fb, mass, rho, S, A, CL0, CD0,
+                                      wingless=wingless)
 
     # --- Middle: figure ---
     with col_fig:
@@ -458,15 +483,17 @@ with tab_force:
         st.metric("Tx (horiz.)", f"{fb['Tx']:.1f} N")
         st.metric("Tz (vert.)", f"{fb['Tz']:.1f} N")
         st.metric("T (total)", f"{fb['T']:.1f} N")
+        st.metric("Thrust angle φ", f"{fb['phi']:.1f}°",
+                  help="From horizontal")
+        st.metric("Tilt off flight path", f"{fb['tilt']:+.1f}°")
         st.metric("Weight W", f"{fb['W']:.1f} N")
 
-        resid = fb["residual"]
-        if abs(resid) < 0.01 * max(fb["W"], 1.0):
-            st.success(f"✅ Trimmed\nnet {resid:+.1f} N")
-        elif resid > 0:
-            st.info(f"↑ Climb\nnet {resid:+.1f} N — V above trim")
+        if abs(fb["tilt"]) < 0.5:
+            st.success("✅ Thrust aligned with the flight path — wing lift "
+                       "carries the perpendicular weight.")
         else:
-            st.warning(f"↓ Sink\nnet {resid:+.1f} N — V below trim")
+            st.info(f"↳ Thrust tilts **{fb['tilt']:+.1f}°** off the flight "
+                    f"path to supply the perpendicular force the wing can't.")
 
 # ---------- Tab 2: feasibility map ----------
 with tab_map:
