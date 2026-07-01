@@ -142,7 +142,7 @@ BLUE, RED, GREEN, PURPLE, ORANGE = (
 # ============================================================
 # Streamlit UI
 # ============================================================
-st.title("🚁 Drone Design Dashboard")
+st.title("🚁 Trim & Thrust — Steady Flight Analysis")
 st.caption("Longitudinal steady-trim & thrust feasibility (2-DOF). "
            "Pitch angle γ: 90° = hover, 0° = forward cruise.")
 

@@ -12,7 +12,7 @@ import streamlit as st
 st.set_page_config(page_title="Drone Design", page_icon="🚁", layout="wide")
 
 pages = [
-    st.Page("views/dashboard.py", title="Dashboard", icon="🚁", default=True),
+    st.Page("views/dashboard.py", title="Trim & Thrust", icon="🚁", default=True),
     st.Page("views/bio.py", title="Bio", icon="👤"),
 ]
 
