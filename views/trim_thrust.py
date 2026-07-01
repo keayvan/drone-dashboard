@@ -225,35 +225,18 @@ def _bp(s, p, cg, sg):
 
 
 def _add_drone_glyph(fig, gr, r):
-    """A tail-sitter drone at the origin, nose along the body axis (tilt gr)."""
+    """A simple bullet-shaped body at the origin, nose along the body axis."""
     cg, sg = np.cos(gr), np.sin(gr)
     body = "#1a1a1a"
-
-    # fuselage (tapered body, nose at +s)
-    pts = [(1.15, 0.0), (0.55, 0.13), (-0.15, 0.17), (-0.85, 0.09),
-           (-1.05, 0.0), (-0.85, -0.09), (-0.15, -0.17), (0.55, -0.13)]
-    fx, fz = zip(*[_bp(s * r, p * r, cg, sg) for s, p in pts])
+    # bullet: ogive nose at +s, straight sides, flat base at -s
+    pts = [(1.0, 0.0), (0.85, 0.10), (0.6, 0.17), (0.2, 0.20),
+           (-0.9, 0.20), (-0.9, -0.20), (0.2, -0.20), (0.6, -0.17),
+           (0.85, -0.10)]
+    bx, bz = zip(*[_bp(s * r, p * r, cg, sg) for s, p in pts])
     fig.add_trace(go.Scatter(
-        x=list(fx) + [fx[0]], y=list(fz) + [fz[0]], mode="lines",
+        x=list(bx) + [bx[0]], y=list(bz) + [bz[0]], mode="lines",
         fill="toself", fillcolor=body, line=dict(color=body, width=1),
-        opacity=0.92, showlegend=False, hoverinfo="skip"))
-
-    # motor arms + rotor discs near the nose
-    for side in (+1, -1):
-        arm0 = _bp(0.35 * r, 0.0, cg, sg)
-        disc = _bp(0.55 * r, side * 0.82 * r, cg, sg)
-        fig.add_shape(type="line", x0=arm0[0], y0=arm0[1],
-                      x1=disc[0], y1=disc[1],
-                      line=dict(color=body, width=3))
-        rd = 0.30 * r
-        fig.add_shape(type="circle", x0=disc[0] - rd, x1=disc[0] + rd,
-                      y0=disc[1] - rd, y1=disc[1] + rd,
-                      line=dict(color=body, width=2.5),
-                      fillcolor="#78909c", opacity=0.5)
-        hb = 0.06 * r
-        fig.add_shape(type="circle", x0=disc[0] - hb, x1=disc[0] + hb,
-                      y0=disc[1] - hb, y1=disc[1] + hb,
-                      line=dict(color=body, width=1), fillcolor=body)
+        opacity=0.9, showlegend=False, hoverinfo="skip"))
 
 
 def _add_projections(fig, x, z, name, color):

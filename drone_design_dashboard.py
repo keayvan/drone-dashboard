@@ -19,8 +19,8 @@ pages = {
     ],
     "Analyses": [
         st.Page("views/trim_thrust.py", title="Trim & Thrust", icon="🚁"),
+        st.Page("views/moment.py", title="Moment", icon="⚖️"),
         # Add future analyses here, e.g.:
-        # st.Page("views/moment.py",    title="Moment",    icon="⚖️"),
         # st.Page("views/transient.py", title="Transient", icon="⏱️"),
         # st.Page("views/battery.py",   title="Battery",   icon="🔋"),
         # st.Page("views/cfd.py",       title="CFD",       icon="🌀"),

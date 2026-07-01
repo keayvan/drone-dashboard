@@ -38,7 +38,7 @@ digraph G {
         labeljust="l"; fontname="Helvetica"; fontsize=11; fontcolor="#37474f";
         style="rounded,dashed"; color="#90a4ae"; margin=12;
         trim      [label="Trim & Thrust  ✓", fillcolor="#c8e6c9"];
-        moment    [label="Moment", fillcolor="#fff9c4"];
+        moment    [label="Moment  ✓", fillcolor="#c8e6c9"];
         transient [label="Transient", fillcolor="#fff9c4"];
     }
 
@@ -76,9 +76,9 @@ with c1:
     st.caption("Longitudinal steady-trim speed and required thrust vs pitch "
                "angle; thrust-feasibility envelope.")
 with c2:
-    st.markdown("**⚖️ Moment**  🟡")
-    st.caption("Pitch-moment balance and static/dynamic stability "
-               "(planned).")
+    st.markdown("**⚖️ Moment**  🟢")
+    st.caption("Static pitch-moment balance about the CG and differential-"
+               "thrust control authority.")
 with c3:
     st.markdown("**⏱️ Transient · 🔋 Battery · 🌀 CFD**  🟡")
     st.caption("Transition dynamics, energy/endurance sizing and "
