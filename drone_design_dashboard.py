@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-JOSELITO — Drone Design Dashboard
-=================================
+Drone Design Dashboard
+======================
 Interactive Streamlit front-end for the longitudinal trim & thrust
 feasibility model (see steady_trimmed_flight_2DOF.py).
+(Tail-sitter longitudinal trim analysis.)
 
 Run:
     streamlit run drone_design_dashboard.py
@@ -122,7 +123,7 @@ def feasibility_crossings(df, T_available):
 # Presets
 # ============================================================
 PRESETS = {
-    "JOSELITO (placeholder aero)": dict(
+    "Baseline (placeholder aero)": dict(
         mass=5.0, rho=1.225, S=0.027, A=0.02, CL0=0.08, CD0=0.4, T_available=100.0
     ),
     "Cambered airfoil (NACA 2412-ish)": dict(
@@ -141,10 +142,10 @@ BLUE, RED, GREEN, PURPLE, ORANGE = (
 # ============================================================
 # Streamlit UI
 # ============================================================
-st.set_page_config(page_title="JOSELITO Drone Design", page_icon="🚁",
+st.set_page_config(page_title="Drone Design", page_icon="🚁",
                    layout="wide")
 
-st.title("🚁 JOSELITO — Drone Design Dashboard")
+st.title("🚁 Drone Design Dashboard")
 st.caption("Longitudinal steady-trim & thrust feasibility (2-DOF). "
            "Pitch angle γ: 90° = hover, 0° = forward cruise.")
 
@@ -353,7 +354,7 @@ with tab_table:
     st.download_button(
         "⬇️ Download full trim sweep (CSV)",
         df.to_csv(index=False).encode("utf-8"),
-        file_name="joselito_trim_sweep.csv", mime="text/csv")
+        file_name="trim_sweep.csv", mime="text/csv")
 
 # ---------- Tab 4: physics ----------
 with tab_about:
@@ -386,5 +387,5 @@ $$T_x = \frac{D\cos\gamma + L\sin\gamma}{\cos\gamma},\quad
 The imbalance $|T_x - T_z|$ is zero exactly on the trim curve.
 """)
     st.info("Source model: `steady_trimmed_flight_2DOF.py`. "
-            "The default JOSELITO preset uses ⚠️ placeholder aero coefficients "
+            "The default preset uses ⚠️ placeholder aero coefficients "
             "(C_L0, C_D0) — replace them with values from your airfoil/CFD data.")

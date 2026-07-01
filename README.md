@@ -1,6 +1,6 @@
-# JOSELITO — Drone Design Dashboard
+# Drone Design Dashboard
 
-Interactive Streamlit dashboard for the JOSELITO tail-sitter drone's
+Interactive Streamlit dashboard for a tail-sitter drone's
 longitudinal steady-trim & thrust-feasibility model (2-DOF).
 
 Pitch angle γ: **90° = hover**, **0° = forward cruise**.
