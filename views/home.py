@@ -31,7 +31,7 @@ digraph G {
           fontsize=11, margin="0.18,0.11", color="#607d8b", penwidth=1.2];
     edge [color="#546e7a", arrowsize=0.8, penwidth=1.2];
 
-    mission [label="1 · Mission\ndefinition", fillcolor="#e3f2fd"];
+    mission [label="1 · Mission\ndefinition\na.flight time\nb.Cruise speed\nmax_speed", fillcolor="#e3f2fd"];
 
     subgraph cluster_step2 {
         label="2 · Steady & dynamic analysis";
