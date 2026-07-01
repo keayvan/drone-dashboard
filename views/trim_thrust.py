@@ -264,6 +264,13 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
     D = kD * v ** 2
     T = D + L * np.tan(gr)          # thrust from horizontal (x) balance
     Tx, Tz = T * cg, T * sg
+    resid = Tz + L * cg - D * sg - W   # net vertical (horizontal is balanced)
+    if abs(resid) < 0.01 * max(W, 1.0):
+        state = "trimmed"
+    elif resid > 0:
+        state = "off-trim → climbing"
+    else:
+        state = "off-trim → sinking"
 
     vectors = [
         ("T", Tx, Tz, RED),
@@ -308,6 +315,18 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
                            xshift=16 if x >= 0 else -16,
                            yshift=16 if z >= 0 else -16)
 
+    # net (unbalanced) vertical force, drawn just right of the z-axis when
+    # off-trim — makes clear the four forces do NOT close at this V.
+    if abs(resid) > 0.01 * max(W, 1.0):
+        xo = 0.07 * R
+        fig.add_annotation(x=xo, y=resid, ax=xo, ay=0, xref="x", yref="y",
+                           axref="x", ayref="y", showarrow=True,
+                           arrowhead=3, arrowsize=1.1, arrowwidth=3,
+                           arrowcolor=ORANGE)
+        fig.add_annotation(x=xo, y=resid, text="<b>F_net</b>", showarrow=False,
+                           font=dict(color=ORANGE, size=12),
+                           xshift=18, yshift=6 if resid >= 0 else -6)
+
     fig.update_xaxes(range=[-R, R], title_text="Horizontal force component [N]",
                      zeroline=False, showgrid=False)
     fig.update_yaxes(range=[-R, R], title_text="Vertical force component [N]",
@@ -315,8 +334,7 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0, g=G0):
                      scaleanchor="x", scaleratio=1)
     fig.update_layout(
         height=640, plot_bgcolor="white", showlegend=False,
-        title=f"Force diagram — trimmed forward flight "
-              f"(α = 0, γ = {gamma_deg:.0f}°)",
+        title=f"Force diagram (α = 0, γ = {gamma_deg:.0f}°) — {state}",
         margin=dict(t=60, l=40, r=40, b=40))
 
     return fig, dict(L=L, D=D, T=T, Tx=Tx, Tz=Tz, W=W,
