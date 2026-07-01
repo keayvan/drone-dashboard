@@ -399,40 +399,44 @@ with tab_force:
         "the **vertical residual** tells you whether the vehicle is trimmed "
         "at that speed.")
 
-    fc1, fc2 = st.columns(2)
-    with fc1:
+    col_in, col_fig, col_out = st.columns([1, 2.6, 1.1], gap="large")
+
+    # --- Left: inputs ---
+    with col_in:
+        st.subheader("Inputs")
         gamma_fb = st.slider("Pitch angle γ [deg]", 1, 89, 35, key="fb_gamma")
-    kL_fb, _ = coefficients(rho, S, A, CL0, CD0)
-    v_trim_here = float(np.sqrt(
-        max(W * np.cos(np.radians(gamma_fb)) / kL_fb, 0.0)))
-    v_max_slider = float(max(round(v_trim_here * 2), 10))
-    with fc2:
+        kL_fb, _ = coefficients(rho, S, A, CL0, CD0)
+        v_trim_here = float(np.sqrt(
+            max(W * np.cos(np.radians(gamma_fb)) / kL_fb, 0.0)))
+        v_max_slider = float(max(round(v_trim_here * 2), 10))
         v_fb = st.slider("Airspeed V [m/s]", 0.0, v_max_slider,
                          float(round(v_trim_here, 1)), key="fb_v",
                          help=f"Trim speed at γ = {gamma_fb}° is "
                               f"≈ {v_trim_here:.1f} m/s")
 
     fig_fb, fb = force_diagram_figure(v_fb, gamma_fb, mass, rho, S, A, CL0, CD0)
-    st.plotly_chart(fig_fb, use_container_width=True)
 
-    m = st.columns(6)
-    m[0].metric("Lift L", f"{fb['L']:.1f} N")
-    m[1].metric("Drag D", f"{fb['D']:.1f} N")
-    m[2].metric("Tx (horiz.)", f"{fb['Tx']:.1f} N")
-    m[3].metric("Tz (vert.)", f"{fb['Tz']:.1f} N")
-    m[4].metric("T (total)", f"{fb['T']:.1f} N")
-    m[5].metric("Weight W", f"{fb['W']:.1f} N")
+    # --- Middle: figure ---
+    with col_fig:
+        st.plotly_chart(fig_fb, use_container_width=True)
 
-    resid = fb["residual"]
-    if abs(resid) < 0.01 * max(fb["W"], 1.0):
-        st.success(f"✅ Trimmed — vertical forces balance (net {resid:+.1f} N). "
-                   f"V ≈ trim speed for γ = {gamma_fb}°.")
-    elif resid > 0:
-        st.info(f"↑ Net vertical force {resid:+.1f} N (upward) — V is above the "
-                f"trim speed for this γ; the vehicle would climb / accelerate up.")
-    else:
-        st.warning(f"↓ Net vertical force {resid:+.1f} N (downward) — V is below "
-                   f"the trim speed for this γ; the vehicle would sink.")
+    # --- Right: results ---
+    with col_out:
+        st.subheader("Results")
+        st.metric("Lift L", f"{fb['L']:.1f} N")
+        st.metric("Drag D", f"{fb['D']:.1f} N")
+        st.metric("Tx (horiz.)", f"{fb['Tx']:.1f} N")
+        st.metric("Tz (vert.)", f"{fb['Tz']:.1f} N")
+        st.metric("T (total)", f"{fb['T']:.1f} N")
+        st.metric("Weight W", f"{fb['W']:.1f} N")
+
+        resid = fb["residual"]
+        if abs(resid) < 0.01 * max(fb["W"], 1.0):
+            st.success(f"✅ Trimmed\nnet {resid:+.1f} N")
+        elif resid > 0:
+            st.info(f"↑ Climb\nnet {resid:+.1f} N — V above trim")
+        else:
+            st.warning(f"↓ Sink\nnet {resid:+.1f} N — V below trim")
 
 # ---------- Tab 2: feasibility map ----------
 with tab_map:
