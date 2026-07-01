@@ -256,21 +256,28 @@ with tab_curves:
         x=df["gamma_deg"], y=df["D"], mode="lines", name="Drag D",
         line=dict(color=ORANGE, width=1.5, dash="dashdot")), row=1, col=2)
 
+    # Reference lines — labels pinned to the LEFT edge so they never collide
+    # with the crossing markers (which sit on the right side of the curve).
     fig.add_hline(y=W, line=dict(color="black", dash="dot"),
-                  annotation_text=f"W = {W:.0f} N", row=1, col=2)
+                  annotation_text=f"W = {W:.0f} N",
+                  annotation_position="top left", row=1, col=2)
     fig.add_hline(y=T_available, line=dict(color=PURPLE, dash="dash", width=2),
-                  annotation_text=f"T_avail = {T_available:.0f} N", row=1, col=2)
+                  annotation_text=f"T_avail = {T_available:.0f} N",
+                  annotation_position="bottom left", row=1, col=2)
 
-    # crossing markers
+    # crossing markers — labels placed BELOW the marker, clear of the ref lines
     for (g_c, v_c, _) in crossings:
         fig.add_trace(go.Scatter(
             x=[g_c], y=[v_c], mode="markers+text", showlegend=False,
             marker=dict(color=RED, size=10),
-            text=[f" γ={g_c:.1f}°"], textposition="top right"), row=1, col=1)
+            text=[f"γ={g_c:.1f}°"], textposition="bottom center",
+            textfont=dict(color=RED)), row=1, col=1)
         fig.add_trace(go.Scatter(
             x=[g_c], y=[T_available], mode="markers+text", showlegend=False,
             marker=dict(color=PURPLE, size=10),
-            text=[f" v={v_c:.1f} m/s"], textposition="top right"), row=1, col=2)
+            text=[f"γ={g_c:.1f}°, v={v_c:.1f} m/s"],
+            textposition="bottom center",
+            textfont=dict(color=PURPLE)), row=1, col=2)
 
     fig.update_xaxes(title_text="Pitch angle γ [deg]", row=1, col=1)
     fig.update_xaxes(title_text="Pitch angle γ [deg]", row=1, col=2)
