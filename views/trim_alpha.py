@@ -216,7 +216,8 @@ with st.sidebar:
     stall_deg = st.number_input("Stall angle [deg]", 5.0, 30.0, 15.0, 1.0)
 
 # reference speed where alpha = 0 (wing carries W·cosγ at C_L0), at gamma below
-tab_diagram, tab_sweep = st.tabs(["⚖️ Force diagram", "📈 α & thrust vs speed"])
+tab_diagram, tab_sweep, tab_phys = st.tabs(
+    ["⚖️ Force diagram", "📈 α & thrust vs speed", "📖 Physics"])
 
 # ---------- Force diagram ----------
 with tab_diagram:
@@ -309,3 +310,37 @@ with tab_sweep:
                "speed rises, C_L(α) needs less α; α crosses 0 at the speed "
                "where the wing alone (at C_L0) balances W·cosγ, then goes "
                "slightly negative.")
+
+# ---------- Physics ----------
+with tab_phys:
+    st.markdown("### Self-consistent α trim")
+    st.markdown(
+        r"The rotors are fixed to the airframe, so the drone points along the "
+        r"**thrust**. The angle between the body/thrust and the flight path is "
+        r"the **angle of attack** $\alpha = \varphi - \gamma$. Because the "
+        r"wing lift depends on $\alpha$, the lift and the required tilt must "
+        r"be solved together.")
+
+    st.markdown("**Wind-axis balance** (∥ and ⊥ to the velocity):")
+    st.latex(r"T\cos\alpha = D + W\sin\gamma")
+    st.latex(r"T\sin\alpha = W\cos\gamma - L(\alpha)")
+
+    st.markdown("Eliminating $T$ gives one equation for $\\alpha$ (solved by "
+                "bisection):")
+    st.latex(r"\tan\alpha = \frac{W\cos\gamma - L(\alpha)}{D + W\sin\gamma}"
+             r"\qquad\Rightarrow\qquad T = \frac{D + W\sin\gamma}{\cos\alpha}")
+
+    st.markdown("with the aero model")
+    st.latex(r"L(\alpha) = q\,S\,(C_{L0} + C_{L\alpha}\,\alpha), \quad "
+             r"D = q\,A\,(C_{D0} + k\,C_L^2), \quad q = \tfrac12\rho V^2")
+
+    st.markdown(
+        "- With **enough wing lift** ($L = W\\cos\\gamma$ at $\\alpha=0$) the "
+        "tilt is zero — thrust runs along the flight path.\n"
+        "- With **no/insufficient wing** the body pitches up so the tilted "
+        "thrust carries the perpendicular weight (the quad case).\n"
+        "- $\\alpha$ beyond the **stall angle** invalidates the linear "
+        "$C_L(\\alpha)$ — the app flags this.")
+    st.info("Refines the Trim & Thrust → Force balance tab, which uses a fixed "
+            "C_L0 (α = 0). Here the lift responds to α, so α and thrust settle "
+            "self-consistently.")

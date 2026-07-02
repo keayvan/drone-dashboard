@@ -113,8 +113,9 @@ m4.metric("ΔT to trim / pair", f"{dT_trim_needed:.2f} N")
 # ============================================================
 # Tabs
 # ============================================================
-tab_break, tab_auth, tab_contour = st.tabs(
-    ["📊 Moment breakdown", "📈 Control authority", "🗺️ Authority map"])
+tab_break, tab_auth, tab_contour, tab_phys = st.tabs(
+    ["📊 Moment breakdown", "📈 Control authority", "🗺️ Authority map",
+     "📖 Physics"])
 
 # ---------- Moment breakdown ----------
 with tab_break:
@@ -240,3 +241,35 @@ with tab_contour:
                "surplus, black line = feasibility boundary (ΔT deficit = 0). "
                "Read where the blue dashed current-moment line crosses the "
                "boundary to get the limiting airspeed.")
+
+# ---------- Physics ----------
+with tab_phys:
+    st.markdown("### Static pitch-moment balance & control authority")
+    st.markdown(
+        "Each component's weight or aero load acts at an **arm** from the CG "
+        "(+forward). The moments are summed to a **net static pitching "
+        "moment**; a positive net is nose-up.")
+    st.latex(r"M_\text{net} = \sum_i F_i \, x_i \qquad "
+             r"(F\ \text{+up},\ x\ \text{+forward from CG})")
+
+    st.markdown("The four motors sit at the CG, so their **weight** adds no "
+                "moment — but their **differential thrust** produces a control "
+                "moment through the pitch control arm")
+    st.latex(r"d_\text{arm} = r_\text{motor}\,\sin(\theta_\text{quad}), \qquad "
+             r"M_\text{ctrl} = \Delta T \cdot 2\,d_\text{arm}")
+
+    st.markdown("So the differential thrust per motor pair needed to trim the "
+                "net moment is")
+    st.latex(r"\Delta T_\text{needed} = \frac{|M_\text{net}|}{2\,d_\text{arm}}")
+
+    st.markdown("**Control-authority check vs speed:** the headroom above the "
+                "trim thrust must cover what's needed:")
+    st.latex(r"\Delta T_\text{avail}(v) = \frac{T_\text{avail} - "
+             r"T_\text{trim}(v)}{2} \;\ge\; \Delta T_\text{needed}")
+
+    st.markdown("**Tail force for neutral balance** (all else fixed):")
+    st.latex(r"F_\text{tail}^{\,*} = -\frac{M_\text{net} - "
+             r"F_\text{tail}\,x_\text{tail}}{x_\text{tail}}")
+    st.info("Direct component force×arm balance (not a C_mα stability "
+            "derivative). Component loads are placeholders pending mass "
+            "properties / CFD.")

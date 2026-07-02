@@ -102,7 +102,7 @@ else:
 # Tabs
 # ============================================================
 tab_thrust, tab_rpm, tab_about = st.tabs(
-    ["📉 Thrust vs speed", "🔧 D & pitch vs RPM", "📖 Model"])
+    ["📉 Thrust vs speed", "🔧 D & pitch vs RPM", "📖 Physics"])
 
 # ---------- Dynamic thrust vs forward speed ----------
 with tab_thrust:
