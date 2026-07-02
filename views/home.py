@@ -64,10 +64,45 @@ with outer[1]:
 
     _arrow()
 
-    # ---- CFD ----
+    # ---- CFD (offered as a service) ----
     with st.container(border=True):
-        st.markdown("#### 💨 CFD  🟡")
-        st.caption("High-fidelity aerodynamic verification (planned).")
+        st.markdown("#### 💨 CFD — I do this part for you  🤝")
+        st.markdown(
+            "Use the dashboards above to size your drone yourself in minutes. "
+            "When you're ready to **verify and refine** the design with "
+            "high-fidelity CFD — drag polars, transition & stability, "
+            "propeller / duct flow, thermal — I deliver it as a **consulting "
+            "service** and feed the results back into your sizing.")
+        b = st.columns(3)
+        b[0].link_button(
+            "📧 Request a CFD quote",
+            "mailto:keayvan.keramati@gmail.com?subject=CFD%20project%20enquiry",
+            use_container_width=True)
+        b[1].link_button("🔗 LinkedIn",
+                         "https://linkedin.com/in/keayvan-keramati",
+                         use_container_width=True)
+        b[2].page_link("views/bio.py", label="👤 About me",
+                       use_container_width=True)
 
     st.caption("↩ CFD results feed back into **Flight Dynamics** — iterate "
-               "until the design converges.  🟢 available · 🟡 planned")
+               "until the design converges.  🟢 available now · 🟡 planned · "
+               "🤝 done for you")
+
+st.divider()
+with st.container(border=True):
+    st.markdown("### 🤝 Design it here — I'll verify it with CFD")
+    st.markdown(
+        "These tools give you a solid **preliminary drone design** for free. "
+        "For production-grade **CFD and detailed aerodynamic design**, work "
+        "with me — a PhD mechanical engineer with 10+ years in aerodynamics, "
+        "propulsion and UAV design.")
+    cc = st.columns(3)
+    cc[0].link_button(
+        "📧 Start a project",
+        "mailto:keayvan.keramati@gmail.com?subject=Drone%20CFD%20project",
+        use_container_width=True)
+    cc[1].link_button("🔗 LinkedIn",
+                      "https://linkedin.com/in/keayvan-keramati",
+                      use_container_width=True)
+    cc[2].page_link("views/bio.py", label="👤 About / credentials",
+                    use_container_width=True)
