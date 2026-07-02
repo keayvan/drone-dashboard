@@ -299,11 +299,12 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0,
                   line=dict(color="#2e7d32", width=1.5))
     fig.add_shape(type="line", x0=0, x1=0, y0=-R, y1=R,
                   line=dict(color="#2e7d32", width=1.5))
-    # body axis / flight path (= velocity direction, alpha = 0)
+    # flight path / velocity direction (grey dotted, at gamma)
     fig.add_shape(type="line", x0=-R * cg, x1=R * cg, y0=-R * sg, y1=R * sg,
                   line=dict(color="grey", width=1, dash="dot"))
-    # drone glyph
-    _add_drone_glyph(fig, gr, mag * 0.22)
+    # drone glyph — the airframe is rigid, so it points along the THRUST
+    # (body-fixed rotors). Its angle off the flight path is the AoA alpha.
+    _add_drone_glyph(fig, np.radians(phi), mag * 0.22)
 
     # gamma arc (horizontal -> flight path)
     rarc = mag * 0.22
@@ -326,7 +327,7 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0,
                                  showlegend=False, hoverinfo="skip"))
         fig.add_annotation(x=rt * 1.18 * np.cos((gr + phir) / 2),
                            y=rt * 1.18 * np.sin((gr + phir) / 2),
-                           text=f"{tilt:+.0f}°", showarrow=False,
+                           text=f"α={tilt:+.0f}°", showarrow=False,
                            font=dict(color=RED, size=12))
 
     # component guide lines (dashed, colour-matched) for T, L, D
@@ -347,8 +348,8 @@ def force_diagram_figure(v, gamma_deg, mass, rho, S, A, CL0, CD0,
                            xshift=16 if x >= 0 else -16,
                            yshift=16 if z >= 0 else -16)
 
-    title = (f"Force diagram (α = 0, γ = {gamma_deg:.0f}°) — "
-             f"thrust tilt {tilt:+.1f}° off flight path")
+    title = (f"Force diagram — flight path γ = {gamma_deg:.0f}°, "
+             f"body/thrust at α = {tilt:+.1f}° to the path")
     fig.update_xaxes(range=[-R, R], title_text="Horizontal force component [N]",
                      zeroline=False, showgrid=False)
     fig.update_yaxes(range=[-R, R], title_text="Vertical force component [N]",
@@ -442,12 +443,17 @@ with tab_curves:
 with tab_force:
     st.markdown(
         "Fully **trimmed** force balance for a chosen airspeed and pitch "
-        "angle. Thrust is **free to tilt** off the flight path — it is solved "
-        "from both axes: $T_x = D\\cos\\gamma + L\\sin\\gamma$ (horizontal) and "
+        "angle. Thrust is solved from both axes: "
+        "$T_x = D\\cos\\gamma + L\\sin\\gamma$ (horizontal) and "
         "$T_z = W + D\\sin\\gamma - L\\cos\\gamma$ (vertical), giving "
-        "$T = \\sqrt{T_x^2 + T_z^2}$ and its direction. The **tilt off the "
-        "flight path** shows how far thrust must point away from the velocity "
-        "to carry the weight — zero with enough wing lift, large with no wing.")
+        "$T = \\sqrt{T_x^2 + T_z^2}$ and its direction. Since the rotors are "
+        "**fixed to the airframe**, the drone points along the **thrust**, so "
+        "the tilt off the flight path is the **angle of attack** "
+        "$\\alpha = \\varphi - \\gamma$ — zero with enough wing lift, large "
+        "with no wing.")
+    st.caption("Note: wing lift here uses the fixed C_L0 (α = 0). A full model "
+               "would recompute lift at the actual α; at the trim speed α = 0 "
+               "so it is exact there.")
 
     col_in, col_fig, col_out = st.columns([1, 2.6, 1.1], gap="large")
 
@@ -485,15 +491,16 @@ with tab_force:
         st.metric("T (total)", f"{fb['T']:.1f} N")
         st.metric("Thrust angle φ", f"{fb['phi']:.1f}°",
                   help="From horizontal")
-        st.metric("Tilt off flight path", f"{fb['tilt']:+.1f}°")
+        st.metric("Angle of attack α", f"{fb['tilt']:+.1f}°",
+                  help="Body/thrust tilt off the flight path (φ − γ)")
         st.metric("Weight W", f"{fb['W']:.1f} N")
 
         if abs(fb["tilt"]) < 0.5:
-            st.success("✅ Thrust aligned with the flight path — wing lift "
-                       "carries the perpendicular weight.")
+            st.success("✅ Body aligned with the flight path (α ≈ 0) — wing "
+                       "lift carries the perpendicular weight.")
         else:
-            st.info(f"↳ Thrust tilts **{fb['tilt']:+.1f}°** off the flight "
-                    f"path to supply the perpendicular force the wing can't.")
+            st.info(f"↳ The drone flies **nose-up at α = {fb['tilt']:+.1f}°**; "
+                    f"the tilted thrust supplies the force the wing can't.")
 
 # ---------- Tab 2: feasibility map ----------
 with tab_map:
