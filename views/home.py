@@ -12,74 +12,62 @@ st.markdown(
     "at **high speed in forward cruise** (γ → 0°).\n\n"
     "Designing such a vehicle means balancing **lift, drag, thrust, weight, "
     "control moments, energy and aerodynamics** across the whole flight "
-    "envelope. Each dashboard here covers one step of that iterative design "
-    "loop — pick a step from the sidebar to explore it.")
+    "envelope. The workflow below runs the loop — click any analysis to open "
+    "its dashboard.")
 
 st.subheader("Design workflow")
 
-# Iterative loop:
-#   1 Mission definition
-#   2 Trim & Thrust · Moment · Transient   (the analysis stage)
-#   3 Battery calculation
-#   4 CFD
-#   -> repeat step 2
-workflow_dot = r"""
-digraph G {
-    rankdir=LR;
-    bgcolor="transparent";
-    node [shape=box, style="rounded,filled", fontname="Helvetica",
-          fontsize=11, margin="0.18,0.11", color="#607d8b", penwidth=1.2];
-    edge [color="#546e7a", arrowsize=0.8, penwidth=1.2];
 
-    mission [label="1 · Mission\ndefinition\na.flight time\nb.Cruise speed\nmax_speed", fillcolor="#e3f2fd"];
+def _arrow():
+    st.markdown(
+        "<div style='text-align:center;font-size:1.5rem;color:#90a4ae;"
+        "line-height:1.1'>↓</div>", unsafe_allow_html=True)
 
-    subgraph cluster_step2 {
-        label="2 · Steady & dynamic analysis";
-        labeljust="l"; fontname="Helvetica"; fontsize=11; fontcolor="#37474f";
-        style="rounded,dashed"; color="#90a4ae"; margin=12;
-        trim      [label="Trim & Thrust  ✓", fillcolor="#c8e6c9"];
-        moment    [label="Moment  ✓", fillcolor="#c8e6c9"];
-        transient [label="Transient", fillcolor="#fff9c4"];
-    }
 
-    battery [label="3 · Battery\ncalculation  ✓", fillcolor="#c8e6c9"];
-    cfd     [label="4 · CFD", fillcolor="#f8bbd0"];
+outer = st.columns([1, 6, 1])
+with outer[1]:
 
-    mission -> trim;
-    mission -> moment;
-    mission -> transient;
+    # ---- Mission ----
+    with st.container(border=True):
+        st.markdown("#### 🎯 Mission")
+        st.caption("Targets that define the design point")
+        mc = st.columns(3)
+        mc[0].markdown("⏱️ **Flight time**")
+        mc[1].markdown("🚀 **Cruise speed**")
+        mc[2].markdown("⚡ **Max speed**")
 
-    trim      -> battery;
-    moment    -> battery;
-    transient -> battery;
+    _arrow()
 
-    battery -> cfd;
+    # ---- Flight Dynamics (linked dashboards) ----
+    with st.container(border=True):
+        st.markdown("#### 🛩️ Flight Dynamics")
+        st.caption("Steady & dynamic analyses — click to open 🟢")
+        fc = st.columns(5)
+        fc[0].page_link("views/trim_thrust.py", label="Trim & Thrust",
+                        icon="🚁", use_container_width=True)
+        fc[1].page_link("views/trim_alpha.py", label="α-Trim", icon="📐",
+                        use_container_width=True)
+        fc[2].page_link("views/moment.py", label="Moment", icon="⚖️",
+                        use_container_width=True)
+        fc[3].page_link("views/propeller.py", label="Propeller", icon="🌀",
+                        use_container_width=True)
+        fc[4].page_link("views/battery.py", label="Battery", icon="🔋",
+                        use_container_width=True)
 
-    cfd -> trim [label="  repeat step 2  ", style="dashed",
-                 constraint=false, color="#c62828", fontcolor="#c62828",
-                 fontsize=10];
-}
-"""
-st.graphviz_chart(workflow_dot, use_container_width=True)
+    _arrow()
 
-st.caption(
-    "🟢 Available now · 🟡 Planned.  The loop iterates: refined CFD results "
-    "feed back into the trim / moment / transient analyses until the design "
-    "converges.")
+    # ---- Purchase components ----
+    with st.container(border=True):
+        st.markdown("#### 🛒 Purchase components  🟡")
+        st.caption("Select motors, ESCs, cells and airframe from the sizing "
+                   "above (planned).")
 
-st.divider()
+    _arrow()
 
-st.subheader("Analyses")
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.markdown("**🚁 Trim & Thrust**  🟢")
-    st.caption("Longitudinal steady-trim speed and required thrust vs pitch "
-               "angle; thrust-feasibility envelope.")
-with c2:
-    st.markdown("**⚖️ Moment**  🟢")
-    st.caption("Static pitch-moment balance about the CG and differential-"
-               "thrust control authority.")
-with c3:
-    st.markdown("**🌀 Propeller**  🟢  ·  **🔋 Battery**  🟢")
-    st.caption("Propeller diameter/pitch sizing and battery energy, endurance "
-               "& range. Transient dynamics and CFD are still planned.")
+    # ---- CFD ----
+    with st.container(border=True):
+        st.markdown("#### 💨 CFD  🟡")
+        st.caption("High-fidelity aerodynamic verification (planned).")
+
+    st.caption("↩ CFD results feed back into **Flight Dynamics** — iterate "
+               "until the design converges.  🟢 available · 🟡 planned")
