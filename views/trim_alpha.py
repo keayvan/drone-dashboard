@@ -290,7 +290,8 @@ with tab_sweep:
     if 3.0 <= v0 <= v_arr[-1]:
         fig.add_vline(x=v0, line=dict(color=GREEN, dash="dot"),
                       annotation_text=f"α=0 @ {v0:.0f} m/s",
-                      annotation_position="top", row=1, col=1)
+                      annotation_position="bottom right",
+                      annotation_font=dict(color=GREEN), row=1, col=1)
     fig.add_trace(go.Scatter(x=v_arr, y=T_arr, mode="lines",
                              line=dict(color=BLUE, width=3), name="T"),
                   row=1, col=2)
