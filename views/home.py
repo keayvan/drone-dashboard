@@ -42,7 +42,7 @@ digraph G {
         transient [label="Transient", fillcolor="#fff9c4"];
     }
 
-    battery [label="3 · Battery\ncalculation", fillcolor="#ffe0b2"];
+    battery [label="3 · Battery\ncalculation  ✓", fillcolor="#c8e6c9"];
     cfd     [label="4 · CFD", fillcolor="#f8bbd0"];
 
     mission -> trim;
@@ -80,6 +80,6 @@ with c2:
     st.caption("Static pitch-moment balance about the CG and differential-"
                "thrust control authority.")
 with c3:
-    st.markdown("**⏱️ Transient · 🔋 Battery · 🌀 CFD**  🟡")
-    st.caption("Transition dynamics, energy/endurance sizing and "
-               "high-fidelity aerodynamics (planned).")
+    st.markdown("**🌀 Propeller**  🟢  ·  **🔋 Battery**  🟢")
+    st.caption("Propeller diameter/pitch sizing and battery energy, endurance "
+               "& range. Transient dynamics and CFD are still planned.")

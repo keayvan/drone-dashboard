@@ -22,9 +22,9 @@ pages = {
         st.Page("views/trim_alpha.py", title="α-Trim", icon="📐"),
         st.Page("views/moment.py", title="Moment", icon="⚖️"),
         st.Page("views/propeller.py", title="Propeller", icon="🌀"),
+        st.Page("views/battery.py", title="Battery", icon="🔋"),
         # Add future analyses here, e.g.:
         # st.Page("views/transient.py", title="Transient", icon="⏱️"),
-        # st.Page("views/battery.py",   title="Battery",   icon="🔋"),
         # st.Page("views/cfd.py",       title="CFD",       icon="🌀"),
     ],
     "About": [
