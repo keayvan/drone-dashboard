@@ -256,7 +256,7 @@ with tab_phys:
         "capacity → weight** — run in opposite directions.")
     st.markdown(
         "We used:")
-        st.markdown(
+    st.markdown(
         "We used")
 
     # ---------- Size battery ----------
