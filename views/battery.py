@@ -257,7 +257,14 @@ with tab_phys:
     st.markdown(
         "We used:")
     st.markdown(
-        "We used")
+        "1. Rankine–Froude actuator disk theory")
+    st.markdown(
+        "2. Newton's Second Law (momentum conservation)")
+    st.markdown(
+        "3. Continuity (mass conservation)")
+    st.markdown(
+        "4. Bernoulli's equation (energy conservation in the flow)")
+
 
     # ---------- Size battery ----------
     st.subheader("🔧 Size battery — from thrust + target time")
