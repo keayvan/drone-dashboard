@@ -251,23 +251,65 @@ with tab_trade:
 # TAB 4 — Physics
 # ============================================================
 with tab_phys:
-    st.markdown("### Battery, power & sizing model")
-    st.latex(r"E_\text{pack} = C_{Ah}\,(S\cdot V_\text{cell}), \quad "
-             r"E_\text{usable} = E_\text{pack}\cdot\text{DoD}, \quad "
-             r"m_\text{batt} = E_\text{pack}/e_\text{spec}")
-    st.markdown("**Hover power** (momentum theory, per rotor then summed):")
-    st.latex(r"P = N\,\frac{T^{1.5}}{\eta\,\sqrt{2\rho A}}, \qquad "
-             r"A = \tfrac{\pi D^2}{4}")
-    st.markdown("**Estimate flight time** (given a pack):")
-    st.latex(r"t = \frac{E_\text{usable}}{P}, \qquad I = \frac{P}{V_\text{nom}}"
-             r"\le C_\text{rate} C_{Ah}")
-    st.markdown("**Size the battery** (thrust per motor + target time t): the "
-                "pack must satisfy **both** energy and current —")
-    st.latex(r"C_{Ah} = \max\!\left("
-             r"\underbrace{\frac{P\,t/3600}{\text{DoD}\cdot V_\text{nom}}}"
-             r"_{\text{energy}},\; "
-             r"\underbrace{\frac{I}{C_\text{rate}}}_{\text{current}}\right), "
-             r"\quad m_\text{batt} = \frac{C_{Ah} V_\text{nom}}{e_\text{spec}}")
-    st.info("Feeds off Trim & Thrust (thrust) and Propeller (rotor diameter). "
-            "η bundles figure-of-merit and drivetrain losses; replace with "
+    st.markdown(
+        "Both modes are the same physics chain — **thrust → power → energy → "
+        "capacity → weight** — run in opposite directions.")
+
+    # ---------- Size battery ----------
+    st.subheader("🔧 Size battery — from thrust + target time")
+
+    st.markdown("**1 · Thrust → power** (momentum / actuator-disk theory). "
+                "Each rotor holds itself up by flinging air down; the power "
+                "grows as $T^{1.5}$ and shrinks with disc area $A$:")
+    st.latex(r"P = N\,\frac{T^{1.5}}{\eta\,\sqrt{2\rho A}} + P_\text{avionics},"
+             r"\qquad A = \tfrac{\pi D^2}{4}")
+
+    st.markdown("**2 · Power → energy** — sustain that power for the target "
+                "time $t$ (seconds):")
+    st.latex(r"E_\text{needed} = P \cdot \tfrac{t}{3600}\quad[\text{Wh}]")
+
+    st.markdown(r"**3 · Energy → capacity** — a pack stores "
+                r"$E = C_{Ah}\,V_\text{nom}$ with $V_\text{nom}=S\,V_\text{cell}$, "
+                r"and only a fraction (DoD) is usable, so it must hold *more*:")
+    st.latex(r"C_{Ah}^{\text{energy}} = "
+             r"\frac{E_\text{needed}}{\text{DoD}\cdot V_\text{nom}}")
+
+    st.markdown(r"**4 · Current check** — the pack must also *deliver* the "
+                r"draw $I = P/V_\text{nom}$ within its C-rating. Whichever "
+                r"limit is harder sizes the pack:")
+    st.latex(r"C_{Ah} = \max\!\Big(\,C_{Ah}^{\text{energy}},\; "
+             r"\tfrac{I}{C_\text{rate}}\,\Big)")
+
+    st.markdown("**5 · Capacity → weight** — from the cells' specific energy "
+                "(Wh/kg):")
+    st.latex(r"m_\text{batt} = \frac{C_{Ah}\,V_\text{nom}}{e_\text{spec}}")
+    st.caption("Long, gentle flights come out **energy-limited**; short "
+               "high-power ones come out **current-limited** — the results "
+               "panel flags which one binds.")
+
+    st.divider()
+
+    # ---------- Estimate flight time ----------
+    st.subheader("⏱️ Estimate flight time — from a given pack")
+
+    st.markdown("**1 · Usable energy** stored in the pack:")
+    st.latex(r"E_\text{usable} = C_{Ah}\,(S\,V_\text{cell})\cdot\text{DoD}")
+
+    st.markdown("**2 · Power draw** for the chosen operating point:")
+    st.latex(r"P_\text{hover} = N\,\frac{T^{1.5}}{\eta\sqrt{2\rho A}}, \qquad "
+             r"P_\text{cruise} = \frac{T\,V}{\eta} \qquad (+\,P_\text{avionics})")
+
+    st.markdown("**3 · Flight time** = energy ÷ power; **range** = time × "
+                "cruise speed:")
+    st.latex(r"t = \frac{E_\text{usable}}{P}, \qquad R = t\,V")
+
+    st.markdown("**4 · Feasibility** — the current must stay under the "
+                "C-rating limit or the pack sags / overheats:")
+    st.latex(r"I = \frac{P}{V_\text{nom}} \;\le\; C_\text{rate}\,C_{Ah}")
+
+    st.divider()
+    st.info("⚠️ Momentum-theory / hover model with a lumped efficiency η "
+            "(rotor figure-of-merit × motor × ESC), constant power over the "
+            "flight, and no thrust-to-weight feedback (use the optional "
+            "dry-mass input for the T/W check). Swap η and specific energy for "
             "measured motor/pack data for detailed sizing.")
