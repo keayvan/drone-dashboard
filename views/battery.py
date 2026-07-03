@@ -254,6 +254,10 @@ with tab_phys:
     st.markdown(
         "Both modes are the same physics chain — **thrust → power → energy → "
         "capacity → weight** — run in opposite directions.")
+    st.markdown(
+        "We used:")
+        st.markdown(
+        "We used")
 
     # ---------- Size battery ----------
     st.subheader("🔧 Size battery — from thrust + target time")
