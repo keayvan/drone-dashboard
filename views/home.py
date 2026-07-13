@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Home — project overview and the iterative design workflow."""
 
+from pathlib import Path
 import streamlit as st
 
 st.title("🚁 Drone Design — Overview")
@@ -15,7 +16,19 @@ st.markdown(
     "envelope. The workflow below runs the loop — click any analysis to open "
     "its dashboard.")
 
-st.subheader("Design workflow")
+st.subheader("The design process")
+_wf = Path(__file__).resolve().parent.parent / "assets" / "workflow-simple.svg"
+if _wf.exists():
+    st.markdown(
+        '<div style="display:flex;justify-content:center;margin:.4rem 0 .4rem">'
+        '<div style="max-width:520px;width:100%">'
+        + _wf.read_text(encoding="utf-8") + '</div></div>',
+        unsafe_allow_html=True)
+st.caption("A closed-loop conceptual design process — sizing, aerodynamics, "
+           "propulsion, dynamics and control, iterated to convergence.")
+
+st.divider()
+st.subheader("Explore the tools")
 
 
 def _arrow():
