@@ -29,8 +29,8 @@ st.markdown(
     """
     <style>
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: #16181d;
-        border: 1px solid #262a31;
+        background: #2b2f37;
+        border: 1px solid #3c414a;
         border-radius: 12px;
     }
     </style>
@@ -201,12 +201,19 @@ m[3].metric("Total price", f"€ {total_p:,.0f}",
 st.markdown("#### Bill of materials")
 show = bom_df.drop(
     columns=[c for c in ["_battery", "_offvehicle"] if c in bom_df.columns])
+show.insert(0, "No.", range(1, len(show) + 1))
 st.dataframe(
     show, hide_index=True, use_container_width=True,
     column_config={
+        "No.": st.column_config.NumberColumn(format="%d", width="small"),
         "Weight [gr]": st.column_config.NumberColumn(format="%.0f"),
         "Price [€]": st.column_config.NumberColumn(format="%.2f"),
     })
 
 st.caption(f"**Total:** {total_w:,.0f} gr  ·  € {total_p:,.2f}  across "
            f"{len(bom_df)} line items.")
+
+st.download_button(
+    "⬇️ Download BOM as CSV",
+    data=show.to_csv(index=False).encode("utf-8"),
+    file_name="bom.csv", mime="text/csv")
