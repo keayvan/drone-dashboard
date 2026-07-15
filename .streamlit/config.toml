@@ -1,6 +1,11 @@
 [theme]
-primaryColor = "#1565c0"
-base = "light"
+base = "dark"
+primaryColor = "#4a9eff"
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#0e0f12"
+textColor = "#f2f4f7"
+borderColor = "#1c1e24"
+linkColor = "#4a9eff"
 
 [browser]
 gatherUsageStats = false
