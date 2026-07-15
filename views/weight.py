@@ -28,15 +28,12 @@ st.caption(
 st.markdown(
     """
     <style>
-    [data-testid="stVerticalBlockBorderWrapper"] {
+    /* every section box carries a key starting with "wbox" */
+    [class*="st-key-wbox"] {
         background: #2b2f37 !important;
         border: 1px solid #3c414a !important;
         border-radius: 12px !important;
-    }
-    /* the inner content block also carries a background in some versions */
-    [data-testid="stVerticalBlockBorderWrapper"] > div,
-    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] {
-        background: transparent !important;
+        padding: 0.75rem 0.9rem !important;
     }
     </style>
     """,
@@ -55,7 +52,7 @@ prop_col, avi_col, frame_col, gs_col = st.columns(4)
 with prop_col:
     st.markdown("### 🌀 Propulsion")
 
-    with st.container(border=True):
+    with st.container(border=True, key="wbox_mot"):
         st.markdown("**Motor(s)**")
         mot_name = st.text_input("Name", "Motor", key="mot_name")
         n_mot = st.number_input("Number of motors", 0, 64, 4, 1, key="n_mot")
@@ -64,7 +61,7 @@ with prop_col:
         mot_p = st.number_input("Unit price [€]", 0.0, 1e6, 25.0, 1.0,
                                 key="mot_p")
 
-    with st.container(border=True):
+    with st.container(border=True, key="wbox_esc"):
         st.markdown("**ESC(s)**")
         esc_name = st.text_input("Name", "ESC", key="esc_name")
         n_esc = st.number_input("Number of ESCs", 0, 64, 4, 1, key="n_esc")
@@ -73,7 +70,7 @@ with prop_col:
         esc_p = st.number_input("Unit price [€]", 0.0, 1e6, 15.0, 1.0,
                                 key="esc_p")
 
-    with st.container(border=True):
+    with st.container(border=True, key="wbox_bat"):
         st.markdown("**Battery**")
         bat_name = st.text_input("Name", "LiPo pack", key="bat_name")
         bat_w = st.number_input("Weight [gr]", 0.0, 1e5, 400.0, 1.0,
@@ -86,13 +83,13 @@ with prop_col:
 with avi_col:
     st.markdown("### 🧠 Avionic system")
 
-    with st.container(border=True):
+    with st.container(border=True, key="wbox_fc"):
         st.markdown("**Flight controller (FC)**")
         fc_name = st.text_input("Name", "Flight controller", key="fc_name")
         fc_w = st.number_input("Weight [gr]", 0.0, 1e5, 15.0, 1.0, key="fc_w")
         fc_p = st.number_input("Price [€]", 0.0, 1e6, 120.0, 1.0, key="fc_p")
 
-    with st.container(border=True):
+    with st.container(border=True, key="wbox_sensors"):
         st.markdown("**Sensor(s)**")
         st.caption("Add one row per sensor (GPS, IMU, camera, lidar…).")
         sensors = st.data_editor(
@@ -103,7 +100,7 @@ with avi_col:
             num_rows="dynamic", hide_index=True, use_container_width=True,
             key="sensors")
 
-    with st.container(border=True):
+    with st.container(border=True, key="wbox_comm"):
         st.markdown("**Communication — air unit**")
         st.caption("On-board radio link (VTX, air unit, antenna, receiver…).")
         comm_air = st.data_editor(
@@ -121,7 +118,7 @@ with avi_col:
 with frame_col:
     st.markdown("### 🛩️ Airframe")
 
-    with st.container(border=True):
+    with st.container(border=True, key="wbox_frame"):
         st.markdown("**Parts**")
         st.caption("Add one row per structural part (frame, arms, canopy…).")
         frame = st.data_editor(
@@ -138,7 +135,7 @@ with frame_col:
 with gs_col:
     st.markdown("### 📡 Ground station")
 
-    with st.container(border=True):
+    with st.container(border=True, key="wbox_ground"):
         st.markdown("**Components**")
         st.caption("Transmitter, goggles, monitor, antenna… Counted in cost, "
                    "but **not** in the vehicle flight weight.")
@@ -201,7 +198,7 @@ show.insert(0, "No.", range(1, len(show) + 1))
 # ---- Results: rendered at the TOP, inside a gray box ----
 with results_area:
     st.subheader("Results")
-    with st.container(border=True):
+    with st.container(border=True, key="wbox_results"):
         m = st.columns(4)
         m[0].metric("Vehicle weight w/o battery", f"{weight_wo_batt:,.0f} gr")
         m[1].metric("Vehicle total weight", f"{total_w:,.0f} gr",
