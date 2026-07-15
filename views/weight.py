@@ -23,6 +23,20 @@ st.caption(
     "Enter each component's unit weight and price. The dashboard sums them into "
     "total weight (with and without the battery), total cost and a full BOM.")
 
+# Give each bordered section box a slightly lighter fill so groups separate
+# clearly against the black background.
+st.markdown(
+    """
+    <style>
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background: #16181d;
+        border: 1px solid #262a31;
+        border-radius: 12px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True)
+
 st.subheader("Inputs")
 prop_col, avi_col, frame_col, gs_col = st.columns(4)
 
