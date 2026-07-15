@@ -29,9 +29,14 @@ st.markdown(
     """
     <style>
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: #2b2f37;
-        border: 1px solid #3c414a;
-        border-radius: 12px;
+        background: #2b2f37 !important;
+        border: 1px solid #3c414a !important;
+        border-radius: 12px !important;
+    }
+    /* the inner content block also carries a background in some versions */
+    [data-testid="stVerticalBlockBorderWrapper"] > div,
+    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] {
+        background: transparent !important;
     }
     </style>
     """,
