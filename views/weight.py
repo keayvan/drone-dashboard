@@ -24,7 +24,7 @@ st.caption(
     "total weight (with and without the battery), total cost and a full BOM.")
 
 st.subheader("Inputs")
-prop_col, avi_col, frame_col = st.columns(3)
+prop_col, avi_col, frame_col, gs_col = st.columns(4)
 
 # --------------------------------------------------------------------------
 # PROPULSION
@@ -80,6 +80,18 @@ with avi_col:
             num_rows="dynamic", hide_index=True, use_container_width=True,
             key="sensors")
 
+    with st.container(border=True):
+        st.markdown("**Communication — air unit**")
+        st.caption("On-board radio link (VTX, air unit, antenna, receiver…).")
+        comm_air = st.data_editor(
+            pd.DataFrame([
+                {"Name": "Air unit / VTX", "Weight [gr]": 30.0,
+                 "Price [€]": 130.0},
+                {"Name": "Antenna", "Weight [gr]": 8.0, "Price [€]": 20.0},
+            ]),
+            num_rows="dynamic", hide_index=True, use_container_width=True,
+            key="comm_air")
+
 # --------------------------------------------------------------------------
 # AIRFRAME
 # --------------------------------------------------------------------------
@@ -97,11 +109,30 @@ with frame_col:
             num_rows="dynamic", hide_index=True, use_container_width=True,
             key="frame")
 
+# --------------------------------------------------------------------------
+# GROUND STATION  (stays on the ground → excluded from flight weight)
+# --------------------------------------------------------------------------
+with gs_col:
+    st.markdown("### 📡 Ground station")
+
+    with st.container(border=True):
+        st.markdown("**Components**")
+        st.caption("Transmitter, goggles, monitor, antenna… Counted in cost, "
+                   "but **not** in the vehicle flight weight.")
+        ground = st.data_editor(
+            pd.DataFrame([
+                {"Name": "Transmitter", "Weight [gr]": 500.0,
+                 "Price [€]": 200.0},
+                {"Name": "Goggles", "Weight [gr]": 600.0, "Price [€]": 350.0},
+            ]),
+            num_rows="dynamic", hide_index=True, use_container_width=True,
+            key="ground")
+
 
 # --------------------------------------------------------------------------
 # BILL OF MATERIALS
 # --------------------------------------------------------------------------
-def _rows_from_editor(df, group):
+def _rows_from_editor(df, group, offvehicle=False):
     """Turn a data_editor frame into BOM rows (skips blank/NaN rows)."""
     rows = []
     for _, r in df.iterrows():
@@ -111,7 +142,7 @@ def _rows_from_editor(df, group):
         if not name and w == 0 and p == 0:
             continue
         rows.append({"Group": group, "Component": name or "—", "Number": 1,
-                     "Weight [gr]": w, "Price [€]": p})
+                     "Weight [gr]": w, "Price [€]": p, "_offvehicle": offvehicle})
     return rows
 
 
@@ -126,26 +157,36 @@ bom = [
      "Weight [gr]": fc_w, "Price [€]": fc_p},
 ]
 bom += _rows_from_editor(sensors, "Avionics")
+bom += _rows_from_editor(comm_air, "Avionics")
 bom += _rows_from_editor(frame, "Airframe")
+bom += _rows_from_editor(ground, "Ground station", offvehicle=True)
 
 bom_df = pd.DataFrame(bom)
 
 battery_w = sum(r["Weight [gr]"] for r in bom if r.get("_battery"))
-total_w = bom_df["Weight [gr]"].sum()
-weight_wo_batt = total_w - battery_w
+vehicle_w = sum(r["Weight [gr]"] for r in bom if not r.get("_offvehicle"))
+ground_w = sum(r["Weight [gr]"] for r in bom if r.get("_offvehicle"))
+ground_p = sum(r["Price [€]"] for r in bom if r.get("_offvehicle"))
+total_w = vehicle_w
+weight_wo_batt = vehicle_w - battery_w
 total_p = bom_df["Price [€]"].sum()
 
 st.divider()
 st.subheader("Results")
 
-m = st.columns(3)
-m[0].metric("Weight w/o battery", f"{weight_wo_batt:,.0f} gr")
-m[1].metric("Total weight", f"{total_w:,.0f} gr",
-            help="Including the battery pack.")
-m[2].metric("Total price", f"€ {total_p:,.0f}")
+m = st.columns(4)
+m[0].metric("Vehicle weight w/o battery", f"{weight_wo_batt:,.0f} gr")
+m[1].metric("Vehicle total weight", f"{total_w:,.0f} gr",
+            help="On-board mass including the battery. Excludes ground station.")
+m[2].metric("Ground station", f"{ground_w:,.0f} gr",
+            help=f"Stays on the ground — not part of flight weight. "
+                 f"Cost € {ground_p:,.0f}.")
+m[3].metric("Total price", f"€ {total_p:,.0f}",
+            help="Vehicle + ground station.")
 
 st.markdown("#### Bill of materials")
-show = bom_df.drop(columns=[c for c in ["_battery"] if c in bom_df.columns])
+show = bom_df.drop(
+    columns=[c for c in ["_battery", "_offvehicle"] if c in bom_df.columns])
 st.dataframe(
     show, hide_index=True, use_container_width=True,
     column_config={
