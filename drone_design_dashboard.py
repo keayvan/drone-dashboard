@@ -13,6 +13,9 @@ import streamlit as st
 
 st.set_page_config(page_title="Drone Design", page_icon="🚁", layout="wide")
 
+# Persistent K1 Aero brand, pinned top-left on every page.
+st.logo("assets/logo.svg", size="large", link="https://k1aero.com")
+
 pages = {
     "Overview": [
         st.Page("views/home.py", title="Home", icon="🏠", default=True),
