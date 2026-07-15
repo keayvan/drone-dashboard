@@ -37,6 +37,10 @@ st.markdown(
     """,
     unsafe_allow_html=True)
 
+# Results render at the TOP but are computed from the inputs below — reserve
+# the space here and fill it once everything is calculated.
+results_area = st.container()
+
 st.subheader("Inputs")
 prop_col, avi_col, frame_col, gs_col = st.columns(4)
 
@@ -185,35 +189,39 @@ total_w = vehicle_w
 weight_wo_batt = vehicle_w - battery_w
 total_p = bom_df["Price [€]"].sum()
 
-st.divider()
-st.subheader("Results")
-
-m = st.columns(4)
-m[0].metric("Vehicle weight w/o battery", f"{weight_wo_batt:,.0f} gr")
-m[1].metric("Vehicle total weight", f"{total_w:,.0f} gr",
-            help="On-board mass including the battery. Excludes ground station.")
-m[2].metric("Ground station", f"{ground_w:,.0f} gr",
-            help=f"Stays on the ground — not part of flight weight. "
-                 f"Cost € {ground_p:,.0f}.")
-m[3].metric("Total price", f"€ {total_p:,.0f}",
-            help="Vehicle + ground station.")
-
-st.markdown("#### Bill of materials")
 show = bom_df.drop(
     columns=[c for c in ["_battery", "_offvehicle"] if c in bom_df.columns])
 show.insert(0, "No.", range(1, len(show) + 1))
-st.dataframe(
-    show, hide_index=True, use_container_width=True,
-    column_config={
-        "No.": st.column_config.NumberColumn(format="%d", width="small"),
-        "Weight [gr]": st.column_config.NumberColumn(format="%.0f"),
-        "Price [€]": st.column_config.NumberColumn(format="%.2f"),
-    })
 
-st.caption(f"**Total:** {total_w:,.0f} gr  ·  € {total_p:,.2f}  across "
-           f"{len(bom_df)} line items.")
+with results_area:
+    st.subheader("Results")
 
-st.download_button(
-    "⬇️ Download BOM as CSV",
-    data=show.to_csv(index=False).encode("utf-8"),
-    file_name="bom.csv", mime="text/csv")
+    m = st.columns(4)
+    m[0].metric("Vehicle weight w/o battery", f"{weight_wo_batt:,.0f} gr")
+    m[1].metric("Vehicle total weight", f"{total_w:,.0f} gr",
+                help="On-board mass including the battery. "
+                     "Excludes ground station.")
+    m[2].metric("Ground station", f"{ground_w:,.0f} gr",
+                help=f"Stays on the ground — not part of flight weight. "
+                     f"Cost € {ground_p:,.0f}.")
+    m[3].metric("Total price", f"€ {total_p:,.0f}",
+                help="Vehicle + ground station.")
+
+    st.markdown("#### Bill of materials")
+    st.dataframe(
+        show, hide_index=True, use_container_width=True,
+        column_config={
+            "No.": st.column_config.NumberColumn(format="%d", width="small"),
+            "Weight [gr]": st.column_config.NumberColumn(format="%.0f"),
+            "Price [€]": st.column_config.NumberColumn(format="%.2f"),
+        })
+
+    st.caption(f"**Total:** {total_w:,.0f} gr  ·  € {total_p:,.2f}  across "
+               f"{len(bom_df)} line items.")
+
+    st.download_button(
+        "⬇️ Download BOM as CSV",
+        data=show.to_csv(index=False).encode("utf-8"),
+        file_name="bom.csv", mime="text/csv")
+
+    st.divider()
