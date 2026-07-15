@@ -1,0 +1,157 @@
+# -*- coding: utf-8 -*-
+"""
+Weight & Cost — Component Bill of Materials
+===========================================
+Add up every component of the vehicle across three groups and get:
+  • total weight (with and without the battery)
+  • total price
+  • a bill of materials (BOM) table
+
+Groups:
+  Propulsion      → Motor(s), ESC(s), Battery
+  Avionic system  → Flight controller (FC), Sensor(s)
+  Airframe        → Parts 1..n
+
+All weights are in grams (gr); all prices in euro (€).
+"""
+
+import pandas as pd
+import streamlit as st
+
+st.title("⚖️ Weight & Cost — Bill of Materials")
+st.caption(
+    "Enter each component's unit weight and price. The dashboard sums them into "
+    "total weight (with and without the battery), total cost and a full BOM.")
+
+st.subheader("Inputs")
+prop_col, avi_col, frame_col = st.columns(3)
+
+# --------------------------------------------------------------------------
+# PROPULSION
+# --------------------------------------------------------------------------
+with prop_col:
+    st.markdown("### 🌀 Propulsion")
+
+    with st.container(border=True):
+        st.markdown("**Motor(s)**")
+        mot_name = st.text_input("Name", "Motor", key="mot_name")
+        n_mot = st.number_input("Number of motors", 0, 64, 4, 1, key="n_mot")
+        mot_w = st.number_input("Unit weight [gr]", 0.0, 1e5, 60.0, 1.0,
+                                key="mot_w")
+        mot_p = st.number_input("Unit price [€]", 0.0, 1e6, 25.0, 1.0,
+                                key="mot_p")
+
+    with st.container(border=True):
+        st.markdown("**ESC(s)**")
+        esc_name = st.text_input("Name", "ESC", key="esc_name")
+        n_esc = st.number_input("Number of ESCs", 0, 64, 4, 1, key="n_esc")
+        esc_w = st.number_input("Unit weight [gr]", 0.0, 1e5, 12.0, 1.0,
+                                key="esc_w")
+        esc_p = st.number_input("Unit price [€]", 0.0, 1e6, 15.0, 1.0,
+                                key="esc_p")
+
+    with st.container(border=True):
+        st.markdown("**Battery**")
+        bat_name = st.text_input("Name", "LiPo pack", key="bat_name")
+        bat_w = st.number_input("Weight [gr]", 0.0, 1e5, 400.0, 1.0,
+                                key="bat_w")
+        bat_p = st.number_input("Price [€]", 0.0, 1e6, 60.0, 1.0, key="bat_p")
+
+# --------------------------------------------------------------------------
+# AVIONIC SYSTEM
+# --------------------------------------------------------------------------
+with avi_col:
+    st.markdown("### 🧠 Avionic system")
+
+    with st.container(border=True):
+        st.markdown("**Flight controller (FC)**")
+        fc_name = st.text_input("Name", "Flight controller", key="fc_name")
+        fc_w = st.number_input("Weight [gr]", 0.0, 1e5, 15.0, 1.0, key="fc_w")
+        fc_p = st.number_input("Price [€]", 0.0, 1e6, 120.0, 1.0, key="fc_p")
+
+    with st.container(border=True):
+        st.markdown("**Sensor(s)**")
+        st.caption("Add one row per sensor (GPS, IMU, camera, lidar…).")
+        sensors = st.data_editor(
+            pd.DataFrame([
+                {"Name": "GPS", "Weight [gr]": 10.0, "Price [€]": 30.0},
+                {"Name": "Camera", "Weight [gr]": 25.0, "Price [€]": 90.0},
+            ]),
+            num_rows="dynamic", hide_index=True, use_container_width=True,
+            key="sensors")
+
+# --------------------------------------------------------------------------
+# AIRFRAME
+# --------------------------------------------------------------------------
+with frame_col:
+    st.markdown("### 🛩️ Airframe")
+
+    with st.container(border=True):
+        st.markdown("**Parts**")
+        st.caption("Add one row per structural part (frame, arms, canopy…).")
+        frame = st.data_editor(
+            pd.DataFrame([
+                {"Name": "Frame", "Weight [gr]": 180.0, "Price [€]": 70.0},
+                {"Name": "Arms", "Weight [gr]": 60.0, "Price [€]": 20.0},
+            ]),
+            num_rows="dynamic", hide_index=True, use_container_width=True,
+            key="frame")
+
+
+# --------------------------------------------------------------------------
+# BILL OF MATERIALS
+# --------------------------------------------------------------------------
+def _rows_from_editor(df, group):
+    """Turn a data_editor frame into BOM rows (skips blank/NaN rows)."""
+    rows = []
+    for _, r in df.iterrows():
+        name = str(r.get("Name", "") or "").strip()
+        w = float(r.get("Weight [gr]", 0) or 0)
+        p = float(r.get("Price [€]", 0) or 0)
+        if not name and w == 0 and p == 0:
+            continue
+        rows.append({"Group": group, "Component": name or "—", "Number": 1,
+                     "Weight [gr]": w, "Price [€]": p})
+    return rows
+
+
+bom = [
+    {"Group": "Propulsion", "Component": mot_name, "Number": int(n_mot),
+     "Weight [gr]": n_mot * mot_w, "Price [€]": n_mot * mot_p},
+    {"Group": "Propulsion", "Component": esc_name, "Number": int(n_esc),
+     "Weight [gr]": n_esc * esc_w, "Price [€]": n_esc * esc_p},
+    {"Group": "Propulsion", "Component": bat_name, "Number": 1,
+     "Weight [gr]": bat_w, "Price [€]": bat_p, "_battery": True},
+    {"Group": "Avionics", "Component": fc_name, "Number": 1,
+     "Weight [gr]": fc_w, "Price [€]": fc_p},
+]
+bom += _rows_from_editor(sensors, "Avionics")
+bom += _rows_from_editor(frame, "Airframe")
+
+bom_df = pd.DataFrame(bom)
+
+battery_w = sum(r["Weight [gr]"] for r in bom if r.get("_battery"))
+total_w = bom_df["Weight [gr]"].sum()
+weight_wo_batt = total_w - battery_w
+total_p = bom_df["Price [€]"].sum()
+
+st.divider()
+st.subheader("Results")
+
+m = st.columns(3)
+m[0].metric("Weight w/o battery", f"{weight_wo_batt:,.0f} gr")
+m[1].metric("Total weight", f"{total_w:,.0f} gr",
+            help="Including the battery pack.")
+m[2].metric("Total price", f"€ {total_p:,.0f}")
+
+st.markdown("#### Bill of materials")
+show = bom_df.drop(columns=[c for c in ["_battery"] if c in bom_df.columns])
+st.dataframe(
+    show, hide_index=True, use_container_width=True,
+    column_config={
+        "Weight [gr]": st.column_config.NumberColumn(format="%.0f"),
+        "Price [€]": st.column_config.NumberColumn(format="%.2f"),
+    })
+
+st.caption(f"**Total:** {total_w:,.0f} gr  ·  € {total_p:,.2f}  across "
+           f"{len(bom_df)} line items.")
