@@ -56,15 +56,15 @@ with outer[1]:
         st.markdown("#### 🛩️ Flight Dynamics")
         st.caption("Steady & dynamic analyses — click to open 🟢")
         fc = st.columns(6)
-        fc[0].page_link("views/trim_thrust.py", label="Trim & Thrust",
+        fc[0].page_link("views/weight.py", label="Weight & BOM", icon="📦",
+                        use_container_width=True)
+        fc[1].page_link("views/trim_thrust.py", label="Trim & Thrust",
                         icon="🚁", use_container_width=True)
-        fc[1].page_link("views/trim_alpha.py", label="α-Trim", icon="📐",
+        fc[2].page_link("views/trim_alpha.py", label="α-Trim", icon="📐",
                         use_container_width=True)
-        fc[2].page_link("views/moment.py", label="Moment", icon="⚖️",
+        fc[3].page_link("views/moment.py", label="Moment", icon="⚖️",
                         use_container_width=True)
-        fc[3].page_link("views/propeller.py", label="Propeller", icon="🌀",
-                        use_container_width=True)
-        fc[4].page_link("views/weight.py", label="Weight & BOM", icon="📦",
+        fc[4].page_link("views/propeller.py", label="Propeller", icon="🌀",
                         use_container_width=True)
         fc[5].page_link("views/battery.py", label="Battery", icon="🔋",
                         use_container_width=True)
