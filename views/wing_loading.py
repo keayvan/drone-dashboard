@@ -154,25 +154,25 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
-with st.expander("📖 The physics"):
-    st.markdown(
-        r"""
-**Wing loading** comes from the slowest speed you must still fly. At stall,
-lift equals weight with the wing at maximum lift coefficient:
+st.subheader("📖 The physics")
 
-$$W = \tfrac{1}{2}\,\rho\,V_\text{stall}^2\,S\,C_{L\max}
-\;\Rightarrow\; \frac{W}{S} = \tfrac{1}{2}\,\rho\,V_\text{stall}^2\,C_{L\max}$$
+st.markdown("**Wing loading (W/S)** comes from the slowest speed you must still "
+            "fly. At stall, lift equals weight with the wing at its maximum lift "
+            "coefficient:")
+st.latex(r"W = \tfrac{1}{2}\,\rho\,V_\text{stall}^2\,S\,C_{L\max}"
+         r"\;\Rightarrow\; \frac{W}{S} = \tfrac{1}{2}\,\rho\,V_\text{stall}^2"
+         r"\,C_{L\max}")
+st.markdown("The wing area then follows directly:")
+st.latex(r"S = \frac{W}{\,W/S\,}")
 
-The wing area then follows directly: $S = W / (W/S)$.
+st.markdown("**Power loading (W/P)** is set by the power the propulsion must "
+            "deliver. In steady cruise thrust equals drag, and climbing adds "
+            "$W\\cdot ROC$ of work rate:")
+st.latex(r"P = \frac{D\,V_\text{cruise} + W\cdot ROC}{\eta_\text{prop}},"
+         r"\qquad \frac{W}{P} = \frac{W}{P}")
+st.markdown("Drag uses a parabolic polar:")
+st.latex(r"C_D = C_{D0} + \frac{C_L^2}{\pi\,e\,AR}")
 
-**Power loading** is set by the power the propulsion must deliver. In steady
-cruise thrust equals drag, and climbing adds $W\cdot ROC$ of work rate:
-
-$$P = \frac{D\,V_\text{cruise} + W\cdot ROC}{\eta_\text{prop}},
-\qquad \frac{W}{P} = \frac{W}{P}$$
-
-Drag uses a parabolic polar $C_D = C_{D0} + \dfrac{C_L^2}{\pi e\,AR}$.
-
-Lower **W/S** → bigger wings, slower, short takeoff, gust-sensitive.
-Higher **W/S** → smaller wings, faster, efficient cruise, higher stall speed.
-        """)
+st.info("Lower **W/S** → bigger wings, slower, short takeoff, gust-sensitive.  \n"
+        "Higher **W/S** → smaller wings, faster, efficient cruise, higher stall "
+        "speed.")
