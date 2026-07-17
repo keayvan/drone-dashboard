@@ -22,6 +22,8 @@ pages = {
     ],
     "Analyses": [
         st.Page("views/weight.py", title="Weight & BOM", icon="📦"),
+        st.Page("views/wing_loading.py", title="Wing & Power Loading",
+                icon="🪁", url_path="wing_loading"),
         st.Page("views/trim_thrust.py", title="Trim & Thrust", icon="🚁"),
         st.Page("views/trim_alpha.py", title="α-Trim", icon="📐"),
         st.Page("views/moment.py", title="Moment", icon="⚖️"),
