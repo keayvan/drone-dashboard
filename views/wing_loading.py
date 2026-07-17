@@ -52,8 +52,8 @@ def parabolic_drag(W, rho, V, S, cd0, k):
     return cl, cd, D
 
 
-tab_fw, tab_vtol, tab_phys = st.tabs(
-    ["✈️ Fixed wing", "🚁 VTOL", "📖 Physics"])
+tab_fw, tab_vtol, tab_hyb, tab_phys = st.tabs(
+    ["✈️ Fixed wing", "🚁 VTOL", "🔀 Hybrid (lift + cruise)", "📖 Physics"])
 
 # ==========================================================================
 # FIXED WING
@@ -268,6 +268,115 @@ with tab_vtol:
     st.plotly_chart(figv, use_container_width=True, key="v_chart")
 
 # ==========================================================================
+# HYBRID (lift + cruise)
+# ==========================================================================
+with tab_hyb:
+    st.caption("A hybrid (lift + cruise / tail-sitter with a wing) hovers on "
+               "rotors AND cruises on a wing. Both systems are sized for their "
+               "own job, and mission energy is split between hover and cruise.")
+    h_results = st.container()
+
+    st.subheader("Inputs")
+    e1, e2, e3, e4 = st.columns(4)
+    with e1:
+        with st.container(border=True, key="lbox_h_wair"):
+            st.markdown("**Weight & air**")
+            hm = st.number_input("All-up mass m [kg]", 0.1, 500.0, 4.0, 0.1,
+                                 key="h_m")
+            hrho = st.number_input("Air density ρ [kg/m³]", 0.3, 1.5, 1.225,
+                                   0.001, format="%.3f", key="h_rho")
+    with e2:
+        with st.container(border=True, key="lbox_h_hover"):
+            st.markdown("**Hover (lift rotors)**")
+            hD = st.number_input("Rotor diameter D [m]", 0.05, 3.0, 0.33, 0.01,
+                                 key="h_d")
+            hN = st.number_input("Number of lift rotors N", 1, 16, 4, 1,
+                                 key="h_n")
+            hFM = st.slider("Figure of merit FM", 0.40, 0.80, 0.60, 0.01,
+                            key="h_fm")
+            hTW = st.slider("Hover thrust-to-weight T/W", 1.0, 2.5, 1.5, 0.05,
+                            key="h_tw")
+    with e3:
+        with st.container(border=True, key="lbox_h_wing"):
+            st.markdown("**Wing & cruise**")
+            h_vtrans = st.number_input("Transition speed [m/s]", 3.0, 60.0,
+                                       14.0, 0.5, key="h_vtrans")
+            h_clmax = st.number_input("Max lift coeff. C_Lmax", 0.6, 2.2, 1.2,
+                                      0.05, key="h_clmax")
+            h_vcru = st.number_input("Cruise speed V_cruise [m/s]", 5.0, 120.0,
+                                     22.0, 0.5, key="h_vcru")
+            h_eta = st.slider("Cruise prop efficiency η", 0.30, 0.85, 0.62,
+                              0.01, key="h_eta")
+    with e4:
+        with st.container(border=True, key="lbox_h_mission"):
+            st.markdown("**Aerodynamics & mission**")
+            h_AR = st.number_input("Aspect ratio AR", 3.0, 25.0, 8.0, 0.5,
+                                   key="h_ar")
+            h_cd0 = st.number_input("Zero-lift drag C_D0", 0.010, 0.100, 0.035,
+                                    0.001, format="%.3f", key="h_cd0")
+            h_e = st.slider("Oswald efficiency e", 0.60, 0.95, 0.80, 0.01,
+                            key="h_e")
+            t_hover = st.number_input("Hover time [min]", 0.0, 60.0, 3.0, 0.5,
+                                      key="h_thover")
+            t_cruise = st.number_input("Cruise time [min]", 0.0, 600.0, 30.0,
+                                       1.0, key="h_tcru")
+
+    Wh = hm * G0
+    kh = 1.0 / (np.pi * h_e * h_AR)
+
+    # Hover on lift rotors
+    Th = hTW * Wh
+    Th_rotor = Th / hN
+    Ah = hN * np.pi * (hD / 2) ** 2
+    disk_h = Th / Ah
+    P_hover_h = hN * Th_rotor ** 1.5 / (hFM * np.sqrt(2 * hrho * (Ah / hN)))
+
+    # Cruise on wing
+    ws_h = 0.5 * hrho * h_vtrans ** 2 * h_clmax
+    S_h = Wh / ws_h
+    cl_h, cd_h, D_h = parabolic_drag(Wh, hrho, h_vcru, S_h, h_cd0, kh)
+    LD_h = cl_h / cd_h
+    P_cruise_h = D_h * h_vcru / h_eta
+
+    P_peak = max(P_hover_h, P_cruise_h)
+    E_hover = P_hover_h * (t_hover / 60.0)      # Wh
+    E_cruise = P_cruise_h * (t_cruise / 60.0)   # Wh
+    E_total = E_hover + E_cruise
+
+    with h_results:
+        st.subheader("Results")
+        with st.container(border=True, key="lbox_h_results"):
+            r = st.columns(4)
+            r[0].metric("Hover power", f"{P_hover_h:,.0f} W",
+                        help=f"Lift rotors, T/W = {hTW:g}, disk loading "
+                             f"{disk_h:,.0f} N/m².")
+            r[1].metric("Cruise power", f"{P_cruise_h:,.0f} W",
+                        help=f"Wing L/D ≈ {LD_h:.1f} at {h_vcru:g} m/s.")
+            r[2].metric("Peak power", f"{P_peak:,.0f} W",
+                        help="Battery must deliver this instantaneously "
+                             "(C-rating).")
+            r[3].metric("Mission energy", f"{E_total:,.0f} Wh",
+                        help=f"Hover {E_hover:,.0f} Wh + cruise "
+                             f"{E_cruise:,.0f} Wh.")
+        st.caption(f"Wing: W/S = {ws_h:,.1f} N/m² → S = {S_h:,.3f} m².  "
+                   f"Hover draws {P_hover_h / max(P_cruise_h, 1e-9):.1f}× the "
+                   f"cruise power — keep hover segments short.")
+        st.divider()
+
+    st.subheader("📊 Mission energy split")
+    st.caption("Hover is power-hungry but brief; cruise is efficient but long. "
+               "The balance sets the battery size.")
+    figh = go.Figure()
+    figh.add_trace(go.Bar(x=["Hover", "Cruise"], y=[E_hover, E_cruise],
+                          marker_color=[ORANGE, BLUE],
+                          text=[f"{E_hover:,.0f} Wh", f"{E_cruise:,.0f} Wh"],
+                          textposition="outside"))
+    figh.update_layout(
+        yaxis_title="Energy  [Wh]", template="plotly_dark", height=420,
+        margin=dict(l=10, r=10, t=30, b=10), showlegend=False)
+    st.plotly_chart(figh, use_container_width=True, key="h_chart")
+
+# ==========================================================================
 # PHYSICS
 # ==========================================================================
 with tab_phys:
@@ -305,3 +414,23 @@ with tab_phys:
     st.info("Lower **disk loading** (bigger rotors) → much lower hover power and "
             "longer endurance. For most VTOLs, hover — not cruise — sizes the "
             "motors, ESCs and battery.")
+
+    st.divider()
+
+    st.markdown("### 🔀 Hybrid (lift + cruise)")
+    st.markdown("A hybrid — a lift+cruise vehicle, or a **tail-sitter with a "
+                "wing** — hovers on rotors and cruises on a wing. Unlike a pure "
+                "VTOL, both jobs run at different times, so **each is sized "
+                "separately** and the battery must cover the whole mission:")
+    st.latex(r"P_\text{peak} = \max\!\left(P_\text{hover},\,P_\text{cruise}"
+             r"\right) \quad\text{(C-rating / discharge)}")
+    st.latex(r"E_\text{mission} = P_\text{hover}\,t_\text{hover} + "
+             r"P_\text{cruise}\,t_\text{cruise} \quad\text{(battery energy)}")
+    st.markdown("The wing is sized from the transition speed exactly as a fixed "
+                "wing ($W/S = \\tfrac{1}{2}\\rho V_\\text{trans}^2 C_{L\\max}$), "
+                "the hover from momentum theory as a VTOL. A hybrid pays a "
+                "**dead-weight penalty** — lift rotors add drag/mass in cruise, "
+                "the wing adds mass in hover — but gains long endurance.")
+    st.info("Because hover power is several times cruise power, keep hover "
+            "segments (takeoff, transition, landing) short — that is what makes "
+            "hybrids far more efficient than a pure multirotor over range.")
