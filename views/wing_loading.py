@@ -129,50 +129,50 @@ with results_area:
 # --------------------------------------------------------------------------
 # Matching (constraint) chart
 # --------------------------------------------------------------------------
-st.subheader("Constraint matching chart")
-st.caption("Required power loading vs wing loading. Feasible designs lie ABOVE "
-           "the curves and LEFT of the stall line. The dot is the design point.")
+tab_chart, tab_phys = st.tabs(["📈 Constraint matching chart", "📖 The physics"])
 
-ws_grid = np.linspace(ws_stall * 0.35, ws_stall * 1.25, 200)
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=ws_grid, y=pw_cruise(ws_grid), name="Cruise",
-                         line=dict(color=BLUE, width=3)))
-fig.add_trace(go.Scatter(x=ws_grid, y=pw_climb(ws_grid), name="Climb",
-                         line=dict(color=ORANGE, width=3)))
-fig.add_vline(x=ws_stall, line=dict(color=RED, width=2, dash="dash"),
-              annotation_text="Stall limit", annotation_position="top left")
-fig.add_trace(go.Scatter(x=[ws_stall], y=[pw_design], name="Design point",
-                         mode="markers",
-                         marker=dict(color=GREEN, size=14, symbol="circle",
-                                     line=dict(color="white", width=1.5))))
-fig.update_layout(
-    xaxis_title="Wing loading  W/S  [N/m²]",
-    yaxis_title="Power loading req.  P/W  [W/N]",
-    template="plotly_dark", height=460,
-    legend=dict(orientation="h", y=1.08),
-    margin=dict(l=10, r=10, t=30, b=10))
-st.plotly_chart(fig, use_container_width=True)
+with tab_chart:
+    st.caption("Required power loading vs wing loading. Feasible designs lie "
+               "ABOVE the curves and LEFT of the stall line. The dot is the "
+               "design point.")
+    ws_grid = np.linspace(ws_stall * 0.35, ws_stall * 1.25, 200)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=ws_grid, y=pw_cruise(ws_grid), name="Cruise",
+                             line=dict(color=BLUE, width=3)))
+    fig.add_trace(go.Scatter(x=ws_grid, y=pw_climb(ws_grid), name="Climb",
+                             line=dict(color=ORANGE, width=3)))
+    fig.add_vline(x=ws_stall, line=dict(color=RED, width=2, dash="dash"),
+                  annotation_text="Stall limit", annotation_position="top left")
+    fig.add_trace(go.Scatter(x=[ws_stall], y=[pw_design], name="Design point",
+                             mode="markers",
+                             marker=dict(color=GREEN, size=14, symbol="circle",
+                                         line=dict(color="white", width=1.5))))
+    fig.update_layout(
+        xaxis_title="Wing loading  W/S  [N/m²]",
+        yaxis_title="Power loading req.  P/W  [W/N]",
+        template="plotly_dark", height=460,
+        legend=dict(orientation="h", y=1.08),
+        margin=dict(l=10, r=10, t=30, b=10))
+    st.plotly_chart(fig, use_container_width=True)
 
-st.divider()
-st.subheader("📖 The physics")
+with tab_phys:
+    st.markdown("**Wing loading (W/S)** comes from the slowest speed you must "
+                "still fly. At stall, lift equals weight with the wing at its "
+                "maximum lift coefficient:")
+    st.latex(r"W = \tfrac{1}{2}\,\rho\,V_\text{stall}^2\,S\,C_{L\max}"
+             r"\;\Rightarrow\; \frac{W}{S} = \tfrac{1}{2}\,\rho\,V_\text{stall}^2"
+             r"\,C_{L\max}")
+    st.markdown("The wing area then follows directly:")
+    st.latex(r"S = \frac{W}{\,W/S\,}")
 
-st.markdown("**Wing loading (W/S)** comes from the slowest speed you must still "
-            "fly. At stall, lift equals weight with the wing at its maximum lift "
-            "coefficient:")
-st.latex(r"W = \tfrac{1}{2}\,\rho\,V_\text{stall}^2\,S\,C_{L\max}"
-         r"\;\Rightarrow\; \frac{W}{S} = \tfrac{1}{2}\,\rho\,V_\text{stall}^2"
-         r"\,C_{L\max}")
-st.markdown("The wing area then follows directly:")
-st.latex(r"S = \frac{W}{\,W/S\,}")
+    st.markdown("**Power loading (W/P)** is set by the power the propulsion must "
+                "deliver. In steady cruise thrust equals drag, and climbing adds "
+                "$W\\cdot ROC$ of work rate:")
+    st.latex(r"P = \frac{D\,V_\text{cruise} + W\cdot ROC}{\eta_\text{prop}},"
+             r"\qquad \frac{W}{P} = \frac{W}{P}")
+    st.markdown("Drag uses a parabolic polar:")
+    st.latex(r"C_D = C_{D0} + \frac{C_L^2}{\pi\,e\,AR}")
 
-st.markdown("**Power loading (W/P)** is set by the power the propulsion must "
-            "deliver. In steady cruise thrust equals drag, and climbing adds "
-            "$W\\cdot ROC$ of work rate:")
-st.latex(r"P = \frac{D\,V_\text{cruise} + W\cdot ROC}{\eta_\text{prop}},"
-         r"\qquad \frac{W}{P} = \frac{W}{P}")
-st.markdown("Drag uses a parabolic polar:")
-st.latex(r"C_D = C_{D0} + \frac{C_L^2}{\pi\,e\,AR}")
-
-st.info("Lower **W/S** → bigger wings, slower, short takeoff, gust-sensitive.  \n"
-        "Higher **W/S** → smaller wings, faster, efficient cruise, higher stall "
-        "speed.")
+    st.info("Lower **W/S** → bigger wings, slower, short takeoff, "
+            "gust-sensitive.  \nHigher **W/S** → smaller wings, faster, "
+            "efficient cruise, higher stall speed.")
