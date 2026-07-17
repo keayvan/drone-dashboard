@@ -229,7 +229,7 @@ with tab_diagram:
         W = mass * G0
         q0 = 0.5 * rho * max(CL0, 1e-6) * S
         v0 = float(np.sqrt(max(W * np.cos(np.radians(gamma_d)) / q0, 0.0)))
-        v_hi = float(max(round(v0 * 2), 10))
+        v_hi = float(max(round(v0 * 4), 10))
         v_d = st.slider("Airspeed V [m/s]", 1.0, v_hi,
                         float(round(max(v0, 1.0), 1)), key="aoa_v",
                         help=f"α = 0 at ≈ {v0:.1f} m/s for this γ")

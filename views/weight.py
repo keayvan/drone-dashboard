@@ -86,14 +86,16 @@ with avi_col:
     with st.container(border=True, key="wbox_fc"):
         st.markdown("**Flight controller (FC)**")
         fc_name = st.text_input("Name", "Flight controller", key="fc_name")
-        fc_w = st.number_input("Weight [gr]", 0.0, 1e5, 15.0, 1.0, key="fc_w")
-        fc_p = st.number_input("Price [€]", 0.0, 1e6, 120.0, 1.0, key="fc_p")
+        fc_w = st.number_input("Weight [gr]", 0.0, 1e5, 60.0, 1.0, key="fc_w")
+        fc_p = st.number_input("Price [€]", 0.0, 1e6, 200.0, 1.0, key="fc_p")
 
     with st.container(border=True, key="wbox_sensors"):
         st.markdown("**Sensor(s)**")
         st.caption("Add one row per sensor (GPS, IMU, camera, lidar…).")
         sensors = st.data_editor(
             pd.DataFrame([
+                {"Name": "Power Distribution board", "Weight [gr]": 50.5, "Price [€]": 40.0},
+                {"Name": "Current & voltage", "Weight [gr]": 30.0, "Price [€]": 10.0},
                 {"Name": "GPS", "Weight [gr]": 10.0, "Price [€]": 30.0},
                 {"Name": "Camera", "Weight [gr]": 25.0, "Price [€]": 90.0},
             ]),
