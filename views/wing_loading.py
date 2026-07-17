@@ -316,10 +316,10 @@ with tab_hyb:
                                     0.001, format="%.3f", key="h_cd0")
             h_e = st.slider("Oswald efficiency e", 0.60, 0.95, 0.80, 0.01,
                             key="h_e")
-            t_hover = st.number_input("Hover time [min]", 0.0, 60.0, 3.0, 0.5,
-                                      key="h_thover")
-            t_cruise = st.number_input("Cruise time [min]", 0.0, 600.0, 30.0,
-                                       1.0, key="h_tcru")
+            t_hover = st.number_input("Hover time [s]", 0.0, 3600.0, 180.0,
+                                      5.0, key="h_thover")
+            t_cruise = st.number_input("Cruise time [s]", 0.0, 36000.0, 1800.0,
+                                       30.0, key="h_tcru")
 
     Wh = hm * G0
     kh = 1.0 / (np.pi * h_e * h_AR)
@@ -339,8 +339,8 @@ with tab_hyb:
     P_cruise_h = D_h * h_vcru / h_eta
 
     P_peak = max(P_hover_h, P_cruise_h)
-    E_hover = P_hover_h * (t_hover / 60.0)      # Wh
-    E_cruise = P_cruise_h * (t_cruise / 60.0)   # Wh
+    E_hover = P_hover_h * (t_hover / 3600.0)      # Wh
+    E_cruise = P_cruise_h * (t_cruise / 3600.0)   # Wh
     E_total = E_hover + E_cruise
 
     with h_results:
@@ -408,6 +408,18 @@ with tab_phys:
     st.latex(r"P_\text{hover} = \sum_i \frac{T_i^{\,1.5}}"
              r"{FM\,\sqrt{2\,\rho\,A_i}}, \qquad "
              r"\text{disk loading} = \frac{T}{A}")
+    st.markdown(
+        "**Figure of merit (FM)** is the hover efficiency of the rotor — the "
+        "ratio of the ideal (momentum-theory) power to the actual power it "
+        "draws:")
+    st.latex(r"FM = \frac{P_\text{ideal}}{P_\text{actual}} \;<\; 1")
+    st.markdown(
+        "It is always below 1 because real blades lose power to profile drag, "
+        "tip losses and wake swirl. It sits in the denominator above, so a "
+        "**higher FM means less hover power**. Typical values: ~0.4–0.6 for "
+        "small drone props, ~0.7–0.8 for well-designed large rotors (1.0 is the "
+        "unreachable ideal). FM only describes *hover* — not cruise. Use ~0.6 "
+        "if unsure.")
     st.markdown("The installed power must cover the harder of the two regimes:")
     st.latex(r"P_\text{installed} = \max\!\left(P_\text{hover},\,"
              r"P_\text{cruise}\right)")
